@@ -1,0 +1,1404 @@
+:root { color-scheme: light dark; }
+
+body{
+  margin:0;
+  font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:#0b0d12;
+  color:#e8ecf1;
+  overflow:hidden;
+}
+
+/* Barra superior (título + arquivo + ajuda) */
+#ui{
+position:fixed;
+top:12px;
+left:12px;
+width: fit-content;
+right: auto;
+display: inline-flex;
+align-items: center;
+gap: 10px;
+background: rgba(18,22,30,.75);
+backdrop-filter: blur(8px);
+border:1px solid rgba(255,255,255,.08);
+border-radius:14px;
+padding:10px 12px;
+box-shadow: 0 10px 30px rgba(0,0,0,.4);
+max-width: calc(100vw - 24px);
+}
+
+.mobinode-doc{
+  height: auto;
+}
+
+.topbar-left{ display:flex; align-items:center; gap:10px; }
+.appname{ font-weight: 800; letter-spacing: .2px; }
+.sep{ opacity:.55; }
+.topbar-right{ display:flex; gap:8px; align-items:center; }
+
+/* Dock de ferramentas */
+.toolDock {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(18,22,30,.78);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.45);
+  z-index: 10;
+}
+
+
+
+
+/* Dock lateral (configurável) */
+.toolDock.dock-side{
+  top: 50%;
+  left: 14px;
+  right: auto;
+  bottom: auto;
+  transform: translateY(-50%);
+  flex-direction: column;
+  padding: 12px 10px;
+}
+.toolDock.dock-side .toolgroup{
+  flex-direction: column;
+}
+
+button{
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color:#e8ecf1;
+  padding:8px 10px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:650;
+  white-space: nowrap;
+}
+button:hover{ background: rgba(255,255,255,.10); }
+button:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+.toolgroup{
+  display:flex;
+  flex-direction: row;
+  gap:6px;
+  padding:6px;
+  border-radius:12px;
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.toolbtn{
+  width:42px;
+  height:36px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  font-size:18px;
+}
+
+/* Botão Estação: mini-identificador da linha ativa */
+.tool-linebadge{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.tool-linebadge-circle{
+  width:22px;
+  height:22px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow: 0 0 0 2px rgba(255,255,255,.28);
+  background: #78aaff;
+}
+.tool-linebadge-text{
+  font-size:12px;
+  font-weight:900;
+  line-height:1;
+  color:#0b0d12;
+  font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+}
+.toolbtn[aria-pressed="true"]{
+  background: rgba(255,215,120,.18);
+  border-color: rgba(255,215,120,.55);
+}
+
+/* ✅ botão de texto com T “forte” */
+.toolbtn-text{
+  font-weight: 900;
+  letter-spacing: .4px;
+}
+
+/* Ajuda flutuante */
+.helpPanel{
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 10;
+  width: 360px;
+  max-width: calc(100vw - 24px);
+  background: rgba(18,22,30,.82);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.45);
+  padding: 10px 12px;
+}
+.helpHeader{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.helpTitle{
+  font-size: 12px;
+  font-weight: 800;
+  opacity: .85;
+  letter-spacing: .2px;
+  text-transform: uppercase;
+}
+.helpBody{
+  font-size: 12px;
+  opacity: .88;
+  line-height: 1.35;
+}
+
+.propsToggle{
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 50;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(18,22,30,.78);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 32px rgba(0,0,0,.45);
+  font-weight: 700;
+  cursor: pointer;
+}
+.propsToggle:hover{
+  background: rgba(18,22,30,.88);
+}
+
+.helpToggle{
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(18,22,30,.78);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 32px rgba(0,0,0,.45);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#panel{
+position:fixed; top:64px; left:12px; z-index:10;
+width:380px;
+max-width: calc(100vw - 24px);
+display:none;
+background: rgba(18,22,30,.85);
+backdrop-filter: blur(8px);
+border:1px solid rgba(255,255,255,.08);
+border-radius:12px;
+padding:10px 12px;
+box-shadow: 0 12px 30px rgba(0,0,0,.45);
+}
+
+/* ✅ trava o textarea do modal dentro do card */
+#modalTextarea{
+box-sizing: border-box;
+width: 100%;
+max-width: 100%;
+display: block;
+}
+
+.modal-card textarea{
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  display: block;
+}
+
+.row{ display:flex; gap:8px; margin-top:8px; }
+.row button{ flex:1; }
+
+/* Sidebar: rolagem sem estragar o design */
+#sidebar {
+overflow: auto;
+scrollbar-gutter: stable both-edges;
+}
+
+/* Firefox */
+#sidebar {
+scrollbar-width: thin;
+scrollbar-color: rgba(255,255,255,.25) transparent;
+}
+
+/* Chrome/Edge/Safari */
+#sidebar::-webkit-scrollbar {
+width: 10px;
+}
+#sidebar::-webkit-scrollbar-track {
+background: transparent;
+}
+#sidebar::-webkit-scrollbar-thumb {
+background: rgba(255,255,255,.18);
+border-radius: 999px;
+border: 3px solid transparent;
+background-clip: content-box;
+}
+#sidebar::-webkit-scrollbar-thumb:hover {
+background: rgba(255,255,255,.28);
+border: 3px solid transparent;
+background-clip: content-box;
+}
+
+#sidebar{
+position: fixed;
+top: 12px;
+right: 12px;
+z-index: 10;
+width: 360px;
+max-width: calc(100vw - 24px);
+background: rgba(18,22,30,.78);
+backdrop-filter: blur(10px);
+border: 1px solid rgba(255,255,255,.08);
+border-radius: 14px;
+box-shadow: 0 12px 32px rgba(0,0,0,.45);
+box-sizing: border-box;
+padding: 12px;
+display: none;
+max-height: calc(100vh - 24px);
+overflow: auto;
+}
+#sidebar header{
+display:flex;
+align-items:center;
+justify-content: space-between;
+gap: 10px;
+margin-bottom: 10px;
+}
+#sidebar h3{
+margin: 0;
+  font-size: 14px;
+letter-spacing: .2px;
+opacity: .95;
+}
+#sidebar .meta{
+  font-size: 12px;
+opacity: .75;
+margin-top: 2px;
+}
+
+#stationPrefix, #stationSuffix{
+background: rgba(0, 0, 0, .35);
+color: #e8ecf1;
+border: 1px solid rgba(255, 255, 255, .12);
+border-radius: 10px;
+padding: 10px;
+outline: none;
+font-weight: 650;
+width: 93%;
+}
+
+.iconbtn{
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color:#e8ecf1;
+  padding:6px 8px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:700;
+  line-height: 1;
+}
+.iconbtn:hover{ background: rgba(255,255,255,.10); }
+
+.section-title{
+  font-size: 12px;
+  opacity: .75;
+  letter-spacing: .2px;
+  margin: 14px 0 8px;
+  text-transform: uppercase;
+}
+
+.field{
+  display:flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 10px 0;
+}
+label{
+  font-size: 12px;
+  opacity: .8;
+}
+input, select{
+  background: rgba(0,0,0,.35);
+  color:#e8ecf1;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  padding: 10px;
+  outline: none;
+  font-weight: 650;
+}
+
+/* Color picker: manter a cor escolhida sempre visível (sem padding que “esconde” o swatch) */
+input[type="color"]{
+  padding: 0;
+  height: 40px;
+  min-height: 40px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input[type="color"]::-webkit-color-swatch-wrapper{ padding: 0; }
+input[type="color"]::-webkit-color-swatch{ border: 0; border-radius: 10px; }
+input[type="color"]::-moz-color-swatch{ border: 0; border-radius: 10px; }
+
+/* =========================
+   Sliders + input numérico (v4.4.7)
+   ========================= */
+.slider-field{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.slider-field input[type="range"]{
+  flex:1;
+  min-width:120px;
+}
+.slider-field .num{
+  width:84px;
+  padding: 10px 10px;
+}
+input:focus, select:focus{
+  border-color: rgba(255, 215, 120, .65);
+}
+.smallnote{
+  font-size: 11px;
+  opacity: .65;
+  line-height: 1.3;
+}
+
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  padding:8px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  opacity: .95;
+}
+
+.line-list{
+  display:flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.line-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.line-item.selected {
+  outline: 2px solid rgba(255,255,255,0.12);
+}
+.line-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  display: inline-block;
+  flex: 0 0 12px;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.25);
+}
+.line-swatch.active {
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.6);
+}
+.line-label {
+  user-select: none;
+}
+.line-item:hover{ background: rgba(0,0,0,.30); }
+.line-item.active{
+  border-color: rgba(255,215,120,.55);
+  background: rgba(255,215,120,.08);
+}
+
+.inline{
+  display:flex;
+  gap: 8px;
+  align-items:center;
+}
+
+/* Linha: identificação (badge) */
+.inline-between{
+  justify-content: space-between;
+  width: 100%;
+}
+
+.radio-group{
+  display:flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.radio-option{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  user-select: none;
+  cursor: pointer;
+  font-size: 12px;
+  opacity: .9;
+}
+
+input[type="checkbox"], input[type="radio"]{
+  width: 16px;
+  height: 16px;
+  padding: 0;
+}
+
+.inline input[type="color"]{
+  width: 44px;
+  height: 40px;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.35);
+}
+
+.inline .color-action{
+  height: 40px;
+  padding: 8px 10px;
+  font-size: 12px;
+  flex: 1;
+}
+
+/* Identificação da linha (1 caractere) */
+.badgeInput{
+  width: 54px;
+  min-width: 54px;
+  text-align: center;
+  font-weight: 900;
+  font-size: 18px;
+  line-height: 1;
+  padding: 10px 8px;
+}
+
+#viewport{
+width:100vw; height:100vh;
+touch-action:none;
+}
+
+.grid-line{ stroke: rgba(255,255,255,.06); stroke-width:1; shape-rendering: crispEdges; }
+
+.edge{
+  fill:none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* v4.7.6: segundo traço (cor secundária) */
+.edge-secondary{
+  fill:none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events:none;
+}
+.edge-hit{
+  stroke: transparent;
+  stroke-width: 20;
+  fill:none;
+  cursor:pointer;
+}
+.edge-selected-overlay{
+  fill:none;
+  stroke: rgba(255,215,120,.95);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events:none;
+}
+
+.edge-handle{
+  fill: rgba(255,255,255,.95);
+  stroke: rgba(255,215,120,.95);
+  stroke-width: 3;
+  cursor: grab;
+}
+.edge-handle:active{ cursor: grabbing; }
+
+.station{
+  /* v4.5.2: padrão metro-map — nós de estação sempre começam brancos */
+  fill:#ffffff;
+  /* v4.1.0: a borda (stroke) agora vem da cor da linha via atributo SVG */
+  stroke-width: 3;
+  #viewport { cursor: default; }
+}
+.station:active{ cursor: grabbing; }
+.station.selected{ stroke: rgba(255,215,120,.95); }
+
+.ghost{
+  stroke: rgba(255,255,255,.55);
+  stroke-width: 4;
+  fill:none;
+  stroke-dasharray: 8 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events:none;
+}
+
+.station-label{
+  fill: rgba(255,255,255,.92);
+  font-size: 12px;
+  font-weight: 650;
+  paint-order: stroke;
+  stroke: rgba(0,0,0,.55);
+  stroke-width: 3px;
+  pointer-events:none;
+  user-select:none;
+}
+
+/* v4.4.0: box-sizing no sidebar (corrige inputs/textarea estourando) */
+#sidebar input, #sidebar textarea, #sidebar select, #sidebar button{
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* v4.4.0: painel Sinalização */
+.signage-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(54px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+.signage-pick{
+  height: 44px;
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  gap: 8px;
+}
+.signage-pick:hover{ background: rgba(255,255,255,.06); }
+.signage-pick.selected{
+  background: rgba(255,215,120,.18);
+  border-color: rgba(255,215,120,.55);
+}
+.signage-name-list{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+.signage-name-item{
+  justify-content: space-between;
+  padding: 8px 10px;
+  height: auto;
+}
+.signage-name-left{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+.signage-dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #78aaff;
+  box-shadow: 0 0 0 2px rgba(0,0,0,.35);
+}
+.signage-selected{
+  margin-top: 8px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  border: 1px dashed rgba(255,255,255,.14);
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.88);
+  font-size: 12px;
+}
+.map-signage-badge.selected .line-badge-circle{
+  stroke: rgba(255,215,120,.92);
+  stroke-width: 3;
+}
+
+.map-signage-badgename.selected .line-badge-circle{
+  stroke: rgba(255,215,120,.92);
+  stroke-width: 3;
+}
+
+/* ✅ Textos do mapa (parte do mundo) */
+.map-text{
+  fill: rgba(255,255,255,.92);
+  paint-order: stroke;
+  stroke: rgba(0,0,0,.55);
+  stroke-width: 4px;
+  user-select: none;
+  cursor: grab;
+}
+.map-text:active{ cursor: grabbing; }
+.map-text.selected{
+  fill: rgba(255,215,120,.98);
+  stroke: rgba(0,0,0,.6);
+  stroke-width: 5px;
+}
+
+.select-rect{
+  fill: rgba(255,215,120,.10);
+  stroke: rgba(255,215,120,.70);
+  stroke-width: 2;
+  stroke-dasharray: 8 6;
+  pointer-events:none;
+}
+
+
+
+/* Metapainel: esconde só o summary do accordion principal (1º nível) */
+body.metapanel .accordion > details > summary{ display:none; }
+
+body.metapanel .accordion > details{
+  border: none;
+  margin: 0;
+  border-radius: 0;
+  overflow: visible;
+}
+
+body.metapanel .acc-body{ padding: 0; }
+
+
+body.metapainel .acc-body{ padding: 0; }
+
+.accordion details{
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  margin: 10px 0;
+  overflow: hidden;
+}
+
+.accordion summary{
+  cursor: pointer;
+  padding: 10px 12px;
+  user-select: none;
+  background: rgba(255,255,255,.04);
+  font-weight: 600;
+}
+
+.acc-body{ padding: 10px 12px; }
+
+.empty-note{
+  opacity: .7;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.section-disabled{
+  opacity: .55;
+  pointer-events: none;
+}
+
+/* ✅ Painel de texto */
+#textContent{
+  width: 100%;
+  max-width: 100%;
+  display: block;
+  height: 96px;
+  resize: vertical;
+  font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.format-row{
+  display: flex;
+  gap: 8px;
+}
+.formatbtn{
+  flex: 0 0 auto;
+  width: 44px;
+  height: 40px;
+  padding: 0;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+}
+.formatbtn[aria-pressed="true"]{
+  background: rgba(255,215,120,.18);
+  border-color: rgba(255,215,120,.55);
+}
+.fmt-b{ font-weight: 900; }
+.fmt-i{ font-style: italic; font-weight: 800; }
+
+/* ✅ Estação: prefixo/sufixo */
+.station-label-main{
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.station-label-sub{
+  font-size: 10px;
+  font-weight: 650;
+  opacity: .9;
+}
+
+
+
+/* Line number badge (map) */
+.line-badge{ pointer-events:none; }
+.line-badge-circle{ stroke: rgba(255,255,255,.65); stroke-width: 2; }
+.line-badge-text{ fill: #0b0d12; font-weight: 900; font-size: 14px; font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif; }
+
+
+/* Dropdown "Arquivo" */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.caret { opacity: 0.85; }
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 220px;
+  background: var(--panel-bg, #111);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+  display: none;
+  z-index: 9999;
+}
+
+.dropdown.open .dropdown-menu {
+  display: block;
+}
+
+.dropdown-item {
+  width: 100%;
+  text-align: left;
+  padding: 10px 10px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  background: transparent;
+  color: inherit;
+}
+
+.dropdown-item:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.dropdown-item.danger:hover {
+  background: rgba(255, 80, 80, 0.14);
+}
+
+.dropdown-sep {
+  height: 1px;
+  margin: 6px 4px;
+  background: rgba(255,255,255,0.10);
+}
+
+
+
+
+/* =========================
+   Modal (Importar/Exportar JSON)
+   ========================= */
+.modal{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:12px;
+  background:rgba(0,0,0,.55);
+  z-index:10000;
+}
+.modal-card{
+  width:640px;
+  max-width:calc(100vw - 24px);
+  background:var(--panel-bg, #111827);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  box-shadow:0 24px 70px rgba(0,0,0,.45);
+  padding:12px;
+}
+.modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+.modal-title{
+  font-weight:700;
+}
+#modalTextarea{
+  width:100%;
+  height:280px;
+  resize:vertical;
+}
+.iconbtn{
+  width:34px;
+  height:34px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
+  color:inherit;
+  cursor:pointer;
+}
+.iconbtn:hover{
+  background:rgba(255,255,255,.10);
+}
+.dropdown .caret{
+  opacity:.85;
+  font-size:.9em;
+}
+.dropdown-menu .dropdown-item.danger{
+  color:#fecaca;
+}
+
+
+/* v4.0.7 - Integração: múltiplos círculos (um por linha) posicionados por "portas" */
+.station-port{
+  /* herda tudo de .station; classe existe pra facilitar ajustes futuros */
+}
+
+/* (compat) estilos antigos podem permanecer sem uso */
+
+/* =========================
+   v4.3.0 — Configurações / Sobre
+   ========================= */
+
+.modal-card-settings{
+  width: 460px;
+  max-width: 92vw;
+}
+
+.modal-card-about{
+  width: 760px;
+  max-width: 92vw;
+  height: 60%;
+}
+
+.radio-group{
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.radio-option{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 12px;
+  background: rgba(255,255,255,.04);
+  cursor: pointer;
+  user-select: none;
+}
+
+.radio-option:hover{
+  background: rgba(255,255,255,.06);
+}
+
+.radio-option input{
+  accent-color: #78aaff;
+}
+
+.about-layout{
+  display:flex;
+  gap:0;
+  height: 90%;
+}
+
+.about-nav{
+  width:220px;
+  border-right:1px solid rgba(255,255,255,.08);
+  padding:14px;
+
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:flex-start;
+
+  gap:10px;
+}
+
+
+.about-nav-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.about-nav-secondary{
+  margin-top:12px; /* espaço normal, não auto */
+  padding-top:10px;
+  border-top:1px solid rgba(255,255,255,.08);
+
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+
+
+.about-nav-footer{
+  padding-top:10px;
+  border-top:1px solid rgba(255,255,255,.08);
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.about-nav-item{
+  width:100%;
+  text-align:left;
+  padding:10px 12px 10px 14px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.08);
+  background:transparent;
+  color:inherit;
+  cursor:pointer;
+  position:relative;
+  overflow:hidden;
+}
+
+.about-nav-item:hover{
+  background:rgba(255,255,255,.05);
+  border-color:rgba(255,255,255,.12);
+}
+
+/* GNOME-ish: fundo suave + barrinha lateral */
+.about-nav-item.active{
+  background:rgba(255,255,255,.08);
+  border-color:rgba(255,255,255,.14);
+}
+
+.about-nav-item.active::before{
+  content:"";
+  position:absolute;
+  left:6px;
+  top:8px;
+  bottom:8px;
+  width:4px;
+  border-radius:999px;
+  background:rgba(255,255,255,.75);
+}
+
+
+.about-footer-link{
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.08);
+  background:transparent;
+  color:inherit;
+  cursor:pointer;
+  text-decoration:none;
+  text-align:left;
+  width: 100%;
+  font-size:13px;
+  opacity:.9;
+}
+
+.about-footer-link:hover{
+  background:rgba(255,255,255,.06);
+}
+
+
+.about-details{
+  flex:1;
+  padding:16px 18px;
+  overflow: hidden;
+}
+
+/* transforma a aba docs em coluna e libera o “flex scroll” */
+.about-pane[data-about-pane="docs"]{
+  height: 100%;
+  display: none; /* mantém o comportamento padrão */
+  flex-direction: column;
+  min-height: 0; /* ESSENCIAL: permite o filho com overflow funcionar */
+}
+
+/* quando ativa, vira flex (em vez de block) */
+.about-pane[data-about-pane="docs"].active{
+  display: flex;
+}
+
+/* container externo da tua documentação (a "div mãe") */
+.mobidoc{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+/* container interno com barra de rolagem (a "div filha") */
+.mobidoc-scroll{
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 10px; /* espaço pro scrollbar não comer texto */
+  scrollbar-gutter: stable both-edges; /* bem chique no layout */
+}
+
+/* tipografia gostosinha */
+.mobidoc,
+.mobidoc-scroll{
+  line-height: 1.5;
+  font-size: 13px;
+}
+
+.mobidoc h3{
+  margin: 14px 0 6px;
+  font-size: 13px;
+  letter-spacing: .2px;
+}
+
+.mobidoc h4{
+  margin: 10px 0 6px;
+  font-size: 12px;
+  opacity: .9;
+}
+
+.mobidoc p,
+.mobidoc li{
+  opacity: .95;
+}
+
+/* listas mais alinhadas */
+.mobidoc ul{
+  margin: 6px 0 10px 18px;
+}
+
+/* “cards” de dica/atalho */
+.mobidoc .doc-tip{
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.05);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+html[data-theme="light"] .mobidoc .doc-tip{
+  border-color: rgba(0,0,0,.12);
+  background: rgba(0,0,0,.03);
+}
+
+.about-pane{
+  display:none;
+}
+
+.about-pane.active{
+  display:block;
+}
+
+.about-actions{
+  display:flex;
+  gap:10px;
+  margin-top:14px;
+}
+
+.muted{
+  opacity:.75;
+}
+
+/* =========================
+   Tema claro (v4.3.0)
+   ========================= */
+
+html[data-theme="light"] body{
+  background: #f6f7fb;
+  color: #0b0d12;
+}
+
+html[data-theme="light"] #ui{
+  background: rgba(255,255,255,.80);
+  border-color: rgba(0,0,0,.10);
+  box-shadow: 0 10px 30px rgba(0,0,0,.12);
+}
+
+html[data-theme="light"] .toolDock{
+  background: rgba(255,255,255,.80);
+  border-color: rgba(0,0,0,.10);
+}
+
+html[data-theme="light"] .toolgroup{
+  background: rgba(0,0,0,.04);
+  border-color: rgba(0,0,0,.10);
+}
+
+html[data-theme="light"] button{
+  background: rgba(0,0,0,.04);
+  border-color: rgba(0,0,0,.12);
+  color: #0b0d12;
+}
+
+html[data-theme="light"] button:hover{
+  background: rgba(0,0,0,.07);
+}
+
+html[data-theme="light"] .toolbtn.active{
+  background: rgba(0,0,0,.10);
+}
+
+html[data-theme="light"] #panel,
+html[data-theme="light"] #sidebar,
+html[data-theme="light"] .helpPanel{
+  background: rgba(255,255,255,.92);
+  border-color: rgba(0,0,0,.10);
+}
+
+html[data-theme="light"] fieldset{
+  border-color: rgba(0,0,0,.10);
+}
+
+html[data-theme="light"] input,
+html[data-theme="light"] select,
+html[data-theme="light"] textarea{
+  background: rgba(255,255,255,.95);
+  border-color: rgba(0,0,0,.14);
+  color: #0b0d12;
+}
+
+html[data-theme="light"] label{
+  color: rgba(0,0,0,.68);
+}
+
+html[data-theme="light"] .panelmeta{
+  color: rgba(0,0,0,.55);
+}
+
+html[data-theme="light"] .accordion .title{
+  color: #0b0d12;
+}
+
+html[data-theme="light"] .grid-line{
+  stroke: rgba(0,0,0,.07);
+}
+
+html[data-theme="light"] .ghost{
+  stroke: rgba(0,0,0,.45);
+}
+
+html[data-theme="light"] .modal{
+  background: rgba(0,0,0,.35);
+}
+
+html[data-theme="light"] .modal-card{
+  background: rgba(255,255,255,.95);
+  border-color: rgba(0,0,0,.10);
+}
+
+html[data-theme="light"] .dropdown-menu{
+  background: rgba(255,255,255,.98);
+  border-color: rgba(0,0,0,.10);
+}
+
+html[data-theme="light"] .dropdown-menu button{
+  background: rgba(0,0,0,.03);
+}
+
+html[data-theme="light"] .dropdown-menu button:hover{
+  background: rgba(0,0,0,.06);
+}
+
+html[data-theme="light"] .propsToggle,
+html[data-theme="light"] .helpToggle{
+  background: rgba(0,0,0,.04);
+  border-color: rgba(0,0,0,.12);
+  color: #0b0d12;
+}
+
+html[data-theme="light"] .propsToggle:hover,
+html[data-theme="light"] .helpToggle:hover{
+  background: rgba(0,0,0,.07);
+}
+
+html[data-theme="light"] .station-label,
+html[data-theme="light"] .map-text{
+  fill: rgba(0,0,0,.86);
+  stroke: rgba(255,255,255,.85);
+}
+
+html[data-theme="light"] .station-label.selected{
+  fill: rgba(0,0,0,.95);
+}
+
+html[data-theme="light"] .line-badge-circle{
+  stroke: rgba(0,0,0,.25);
+}
+
+html[data-theme="light"] .line-badge-text{
+  stroke: rgba(255,255,255,.75);
+}
+
+html[data-theme="light"] .about-placeholder{
+  border-color: rgba(0,0,0,.12);
+  background: rgba(0,0,0,.03);
+}
+
+html[data-theme="light"] .radio-option{
+  border-color: rgba(0,0,0,.12);
+  background: rgba(0,0,0,.03);
+}
+
+html[data-theme="light"] .radio-option:hover{
+  background: rgba(0,0,0,.05);
+}
+
+/* Sub-accordion dentro dos painéis */
+.subacc{
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  margin: 10px 0;
+  overflow: hidden;
+}
+
+.subacc > summary{
+  cursor: pointer;
+  padding: 10px 12px;
+  user-select: none;
+  background: rgba(255,255,255,.03);
+  font-weight: 600;
+}
+
+.subacc-body{
+  padding: 10px 12px;
+}
+
+
+/* =========================
+   MOBILE — dock embaixo + propriedades em card (40% da tela)
+   ========================= */
+@media (max-width: 820px){
+
+  /* 1) Dock fixa embaixo */
+  /* Ctrl+F: .toolDock */
+  .toolDock{
+    left: 12px;
+    right: 12px;
+    top: auto;
+    bottom: 12px;
+    transform: none;
+
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+
+    /* mantém o visual “pill/card” */
+    border-radius: 18px;
+    padding: 10px 12px;
+    z-index: 60;
+  }
+
+  /* Se existir modo dock-side, no mobile ele também vira barra embaixo */
+  /* Ctrl+F: .toolDock.dock-side */
+  .toolDock.dock-side{
+    left: 12px;
+    right: 12px;
+    top: auto;
+    bottom: 12px;
+    transform: none;
+    flex-direction: row;
+  }
+  .toolDock.dock-side .toolgroup{ flex-direction: row; }
+
+  #ui{
+  width: 90%;
+  }
+
+  /* 3) Some com os botões flutuantes (vamos colocar na topbar depois) */
+  /* Ctrl+F: .propsToggle e Ctrl+F: .helpToggle */
+  .propsToggle,
+  .helpToggle{
+    display: none !important;
+  }
+
+ .toolgroup {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap: 6px;
+    padding: 6px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, .18);
+    border: 1px solid rgba(255, 255, 255, .08);
+    flex-wrap: nowrap;
+    align-content: flex-end;
+    justify-content: space-evenly;
+}
+
+  /* 2) Propriedades: card grande acima da dock (~40% da tela) */
+  /* Ctrl+F: #sidebar */
+  #sidebar{
+    position: fixed;
+    left: 12px;
+    right: 12px;
+
+    /* fica acima da dock */
+    bottom: 100px;         /* (12px margem) + (~60px dock) + respiro */
+    height: 40vh;
+
+    /* não encostar na topbar se a tela for pequena */
+    max-height: calc(100vh - 84px - 64px);
+    top: auto;
+
+    width: auto;
+    max-width: none;
+
+    border-radius: 20px;
+    z-index: 55;
+
+    /* reforça “card flutuante” */
+    box-shadow: 0 18px 40px rgba(0,0,0,.55);
+  }
+
+  /* 4) Se o helpPanel existir como flyout, evita brigar com dock também */
+  /* Ctrl+F: .helpPanel */
+  .helpPanel{
+    top: 75px;
+    width: 90%;
+    height: 120px;
+    left: 12px;
+    right: 12px;
+    overflow: auto;
+  }
+
+.helpBody{
+    overflow: auto;
+  }
+
+}
+

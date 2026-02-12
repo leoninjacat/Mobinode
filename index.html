@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="./app_v4.9.0.css">
+  <link rel="stylesheet" href="./app_v4.9.4.css">
   <title>Mobinode</title>
 </head>
 
@@ -11,12 +11,13 @@
   <!-- Barra superior: só título + ações de arquivo + ajuda -->
   <div id="ui" role="banner" aria-label="Barra superior">
     <div class="topbar-left">
-      <strong class="appname">Mobinode</strong>
+      <strong class="appname">Mobinode v4.9.4</strong>
       <span class="sep">|</span>
     </div>
+
     <div class="topbar-right" role="group" aria-label="Arquivo">
       <div class="dropdown" id="fileDropdown" aria-label="Arquivo">
-        <button id="btnFile" title="Arquivo">Arquivo <span class="caret">▾</span></button>
+        <button id="btnFile" title="Arquivo">☰</button>
         <div class="dropdown-menu" role="menu" aria-label="Menu Arquivo">
           <button class="dropdown-item" id="menuNewProject" type="button">Novo…</button>
           <button class="dropdown-item" id="menuImport" type="button">Importar JSON…</button>
@@ -25,26 +26,39 @@
           <button class="dropdown-item" id="menuExportPDF" type="button">Exportar PDF…</button>
           <div class="dropdown-sep" role="separator"></div>
           <button class="dropdown-item danger" id="menuClear" type="button">Limpar…</button>
+          <div class="dropdown-sep" role="separator"></div>
+          <button class="dropdown-item" id="btnConfig" title="Configurações">Configurações</button>
+          <button class="dropdown-item" id="btnAbout" title="Sobre">Sobre</button>
         </div>
       </div>
-      <button id="btnConfig" title="Configurações">Configurações</button>
-      <button id="btnAbout" title="Sobre">Sobre</button>
-      <button id="btnUndo" title="Desfazer (Ctrl+Z)">↺</button>
-      <button id="btnRedo" title="Refazer (Ctrl+Y)">↻</button>
+        <button aria-pressed="false" title="Seta">🖱️</button>
+
+        <button id="toolPan" class="toolbtn" aria-pressed="false" title="Pan">⛶</button>
+        <button id="toolSelect" class="toolbtn" aria-pressed="false" title="Seleção retangular">▭</button>
+        <button id="btnUndo" title="Desfazer (Ctrl+Z)">↺</button>
+        <button id="btnRedo" title="Refazer (Ctrl+Y)">↻</button>
+        <button id="btnHelp" title="Ajuda" >❓</button>
     </div>
   </div>
+
+  <div>
+
+        </div>
+
+
+  <button id="btnHideUI" class="iconbtn" title="Ocultar interface">⤢</button>
+  <button id="btnHamburger" class="iconbtn" title="Menu">☰</button>
 
   <button id="btnShowSidebar" class="propsToggle" title="Abrir painel de propriedades" style="display:none;">
     ✏ Propriedades
   </button>
 
-  <button id="btnHelp" class="helpToggle" title="Ajuda" >❓ Ajuda</button>
+
 
   <!-- Dock de ferramentas (desktop: lateral; mobile: inferior) -->
   <div id="dockTools" class="toolDock" role="toolbar" aria-label="Ferramentas">
     <div id="tools" class="toolgroup" aria-label="Ferramentas principais">
-      <button aria-pressed="false" title="Seta">🖱️</button>
-      <button id="toolPan" class="toolbtn" aria-pressed="false" title="Pan">🖐️</button>
+
       <button id="toolStation" class="toolbtn" aria-pressed="false" title="Estação">
         <span class="tool-linebadge" aria-hidden="true">
           <span class="tool-linebadge-circle">
@@ -52,11 +66,11 @@
           </span>
         </span>
       </button>
+      <button id="btnDragMode" class="toolbtn" aria-pressed="false" title="Modo: mover estação (arraste)">🤚</button>
       <button id="toolLine" class="toolbtn" aria-pressed="false" title="Linhas">🛤️</button>
       <button id="toolConnections" class="toolbtn" aria-pressed="false" title="Conexões">⫘</button>
       <button id="toolCurves" class="toolbtn" aria-pressed="false" title="Curvas (editar dobras)">╮</button>
       <button id="toolText" class="toolbtn toolbtn-text" aria-pressed="false" title="Sinalização">📐</button>
-      <button id="toolSelect" class="toolbtn" aria-pressed="false" title="Seleção retangular">▭</button>
     </div>
   </div>
 
@@ -68,13 +82,13 @@
     </div>
     <div id="helpContent" class="helpBody">
       <ul>
-      <li>🖐 pan</li>
+      <li>⛶ pan (mover o mapa)</li>
       <li>⚪ cria estação</li>
       <li>📐 cria sinalização</li>
-      <li>🛤️ arraste de estação p/ estação pra conectar</li>
+      <li>🤚 modo mover: arrasta estações existentes</li>
+      <li>👊 modo drag: arrasta de uma estação para criar/conectar</li>
       <li>╮ edita dobras do traçado</li>
       <li>▭ seleciona/move</li>
-      <li>ALT: encadear conexões</li>
       <li>Scroll: zoom</li>
       <li>Shift: soma</li>
       <li>Delete: apaga seleção</li>
@@ -86,7 +100,7 @@
   <aside id="sidebar">
     <header>
       <div>
-        <h3 id="sidebarTitle">Mobinode</h3>
+        <h3 id="sidebarTitle">Mobinode v4.9.4</h3>
         <div id="sidebarMeta" class="meta"></div>
       </div>
       <button id="btnCloseSidebar" class="iconbtn" title="Fechar">×</button>
@@ -340,7 +354,7 @@
                 <option value="dotted">Pontilhado</option>
               </select>
 
-              <!-- v4.9.0: traço secundário (estilo Recife-like) -->
+              <!-- v4.9.1: traço secundário (estilo Recife-like) -->
               <div class="field" style="margin-top:12px;">
                 <label class="inline inline-between">
                   <span>Traço secundário</span>
@@ -402,7 +416,7 @@
 
             <div class="section-title" style="margin-top:16px;">Conectar</div>
             <div class="smallnote">
-              No modo <b>Estação</b>: <b>ALT</b> arraste de uma estação para outra (ou para o vazio para criar uma nova).
+              No modo <b>Estação</b>: ative 👊 (drag) e arraste de uma estação para outra (ou para o vazio para criar uma nova).
               <br/>
               <b>Shift</b>: conectar rapidamente (sem encadear).
             </div>
@@ -706,7 +720,7 @@
         <main class="about-details">
           <section class="about-pane active" data-about-pane="app">
             <h2>Mobinode</h2>
-            <h4>versão 4.9.0</h4>
+            <h4>versão 4.9.2</h4>
             <p>
               Mobinode é um editor visual para criar mapas esquemáticos de transporte (linhas, estações,
               integrações e textos) direto no navegador — rápido, leve e focado em clareza.
@@ -714,7 +728,7 @@
 
             <div class="about-mini">
               <div class="about-mini-title">Dica rápida</div>
-              <div class="about-mini-text">Segure <b>Alt</b> e arraste no vazio para criar uma linha com duas estações.</div>
+              <div class="about-mini-text">No modo 👊 (drag), arraste de uma estação para o vazio para criar e conectar uma nova.</div>
             </div>
           </section>
 
@@ -739,12 +753,13 @@
                 <h3>Dicas rápidas (atalhos e gestos)</h3>
                 <ul>
                   <li><b>Scroll</b>: zoom</li>
-                  <li><b>🖐️ Pan</b>: arrasta a visão (mãozinha)</li>
+                  <li><b>⛶ Pan</b>: arrasta a visão (mover o mapa)</li>
                   <li><b>🛤️ Linhas</b>: modo de desenhar/conectar</li>
                   <li><b>⚪ Estação</b>: cria e conecta estações</li>
                   <li><b>📐 Texto e sinalização</b>: cria textos/identificações/nome de linha</li>
                   <li><b>▭ Seleção</b>: seleção retangular (marquee) e mover em grupo</li>
-                  <li><b>ALT</b>: encadear conexões / criar novas estações “no fluxo”</li>
+                  <li><b>👊 (drag)</b>: encadear conexões / criar novas estações “no fluxo”</li>
+                  <li><b>🤚</b>: modo mover (arrasta estações existentes)</li>
                   <li><b>Shift</b>: “conectar rápido” (sem encadear)</li>
                   <li><b>Delete</b>: apaga elemento selecionado (estação/conexão/texto)</li>
                   <li><b>Ctrl+Z</b> / <b>Ctrl+Y</b>: desfazer / refazer</li>
@@ -871,7 +886,7 @@
                 <h3>Criar conexão entre estações</h3>
                 <ul>
                   <li>No modo <b>Estação</b> (⚪): <b>arraste</b> de uma estação até outra para criar conexão na linha ativa.</li>
-                  <li><b>ALT + arrastar</b>: encadeia conexões (você vai ligando uma sequência sem parar toda hora).</li>
+                  <li><b>👊 + arrastar</b>: encadeia conexões (você vai ligando uma sequência sem parar toda hora).</li>
                   <li><b>Shift</b>: conecta rápido (sem encadear).</li>
                   <li>Dica: você pode arrastar para o <b>vazio</b> (em alguns fluxos) para criar uma nova estação conectada de cara.</li>
                 </ul>
@@ -997,7 +1012,7 @@
                 <ol>
                   <li>Crie/renomeie suas <b>linhas</b> e defina cor/espessura.</li>
                   <li>Escolha a <b>linha ativa</b> e vá criando <b+nda>estações</b> no traçado.</li>
-                  <li>Conecte com arrastes e use <b>ALT</b> quando estiver “em cadeia”.</li>
+                  <li>Conecte com arrastes e use o modo <b>👊</b> quando estiver “em cadeia”.</li>
                   <li>Padronize o visual das estações da linha (estilo) e depois ajuste exceções individualmente.</li>
                   <li>Finalize com <b>sinalizações</b> (badge/nome) e textos livres.</li>
                   <li>Use <b>seleção</b> pra mover grupos e “limpar o layout” do mapa.</li>
@@ -1037,10 +1052,10 @@
       <path id="ghost" class="ghost" d="" style="display:none;"></path>
     </g>
   </svg>
-  <script src="./app_v4.9.0.part1.core.js"></script>
-  <script src="./app_v4.9.0.part2.ui.js"></script>
-  <script src="./app_v4.9.0.part3.interactions.js"></script>
-  <script src="./app_v4.9.0.part4.io_boot.js"></script>
+  <script src="./app_v4.9.4.part1.core.js"></script>
+  <script src="./app_v4.9.4.part2.ui.js"></script>
+  <script src="./app_v4.9.4.part3.interactions.js"></script>
+  <script src="./app_v4.9.4.part4.io_boot.js"></script>
 
   <script>
   (function(){
