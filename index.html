@@ -4,50 +4,41 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="./app_v4.9.4.css">
-  <title>Mobinode</title>
+  <title>Mobinode 4.9.4</title>
 </head>
 
 <body>
   <!-- Barra superior: só título + ações de arquivo + ajuda -->
   <div id="ui" role="banner" aria-label="Barra superior">
     <div class="topbar-left">
-      <strong class="appname">Mobinode v4.9.4</strong>
+      <strong class="appname">Mobinode</strong>
       <span class="sep">|</span>
     </div>
+        <div class="topbar-right" role="group" aria-label="Arquivo">
+          <div class="dropdown" id="fileDropdown" aria-label="Arquivo">
+            <button id="btnFile" title="Arquivo">☰</button>
+            <div class="dropdown-menu" role="menu" aria-label="Menu Arquivo">
+              <button class="dropdown-item" id="menuNewProject" type="button">Novo…</button>
+              <button class="dropdown-item" id="menuImport" type="button">Importar JSON…</button>
+              <button class="dropdown-item" id="menuExport" type="button">Exportar JSON…</button>
+              <button class="dropdown-item" id="menuExportPNG" type="button">Exportar PNG…</button>
+              <button class="dropdown-item" id="menuExportPDF" type="button">Exportar PDF…</button>
+              <div class="dropdown-sep" role="separator"></div>
+              <button class="dropdown-item danger" id="menuClear" type="button">Limpar…</button>
+              <div class="dropdown-sep" role="separator"></div>
+              <button class="dropdown-item" id="btnConfig" title="Configurações">Configurações</button>
+              <button class="dropdown-item" id="btnAbout" title="Sobre">Sobre</button>
+            </div>
+          </div>
+            <button aria-pressed="false" title="Seta">🖱️</button>
 
-    <div class="topbar-right" role="group" aria-label="Arquivo">
-      <div class="dropdown" id="fileDropdown" aria-label="Arquivo">
-        <button id="btnFile" title="Arquivo">☰</button>
-        <div class="dropdown-menu" role="menu" aria-label="Menu Arquivo">
-          <button class="dropdown-item" id="menuNewProject" type="button">Novo…</button>
-          <button class="dropdown-item" id="menuImport" type="button">Importar JSON…</button>
-          <button class="dropdown-item" id="menuExport" type="button">Exportar JSON…</button>
-          <button class="dropdown-item" id="menuExportPNG" type="button">Exportar PNG…</button>
-          <button class="dropdown-item" id="menuExportPDF" type="button">Exportar PDF…</button>
-          <div class="dropdown-sep" role="separator"></div>
-          <button class="dropdown-item danger" id="menuClear" type="button">Limpar…</button>
-          <div class="dropdown-sep" role="separator"></div>
-          <button class="dropdown-item" id="btnConfig" title="Configurações">Configurações</button>
-          <button class="dropdown-item" id="btnAbout" title="Sobre">Sobre</button>
+            <button id="toolPan" class="toolbtn" aria-pressed="false" title="Pan">⛶</button>
+            <button id="toolSelect" class="toolbtn" aria-pressed="false" title="Seleção retangular">▭</button>
+            <button id="btnUndo" title="Desfazer (Ctrl+Z)">↺</button>
+            <button id="btnRedo" title="Refazer (Ctrl+Y)">↻</button>
+            <button id="btnHelp" title="Ajuda" >❓</button>
         </div>
       </div>
-        <button aria-pressed="false" title="Seta">🖱️</button>
-
-        <button id="toolPan" class="toolbtn" aria-pressed="false" title="Pan">⛶</button>
-        <button id="toolSelect" class="toolbtn" aria-pressed="false" title="Seleção retangular">▭</button>
-        <button id="btnUndo" title="Desfazer (Ctrl+Z)">↺</button>
-        <button id="btnRedo" title="Refazer (Ctrl+Y)">↻</button>
-        <button id="btnHelp" title="Ajuda" >❓</button>
-    </div>
-  </div>
-
-  <div>
-
-        </div>
-
-
-  <button id="btnHideUI" class="iconbtn" title="Ocultar interface">⤢</button>
-  <button id="btnHamburger" class="iconbtn" title="Menu">☰</button>
 
   <button id="btnShowSidebar" class="propsToggle" title="Abrir painel de propriedades" style="display:none;">
     ✏ Propriedades
