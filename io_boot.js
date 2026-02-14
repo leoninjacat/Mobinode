@@ -4,7 +4,7 @@
  */
 
 "use strict";
-console.log("%c[IO_BOOT] CARREGADO: v5.0.10 ARC-DEFAULTS-FIX", "color:#0f0;font-weight:bold");
+console.log("%c[IO_BOOT] CARREGADO: v5.1.1 SHAPES-TRANSFORM-FIX", "color:#0f0;font-weight:bold");
 
 
 // =========================
@@ -3450,7 +3450,7 @@ function boot() {
     updateCursor();
     showSidebar(true);
 
-    console.log("Mobinode: app.js carregou ✅ (v5.0.0)");
+    console.log("Mobinode: app.js carregou ✅ (v5.1.1)");
 }
 
 boot();

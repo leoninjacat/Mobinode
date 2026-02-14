@@ -1481,6 +1481,10 @@ function renderLineEndpointBadges() {
             if (!Number.isFinite(+t.rx)) t.rx = 18;
             if (!Number.isFinite(+t.r)) t.r = 40;
 
+            // Rotação do shape (graus). Se ficar undefined vira rotate(undefined) e quebra o SVG.
+            // Ctrl+F: Rotação do shape (graus)
+            if (!Number.isFinite(+t.rotation)) t.rotation = 0;
+
             // Polígono regular
             if (t.kind === "shapePoly") {
                 const sd = (typeof t.sides === "number") ? t.sides : parseFloat(t.sides);
@@ -2006,9 +2010,13 @@ function renderLineEndpointBadges() {
                 const g = el("g");
                 g.setAttribute("class", `map-text map-shape${selected ? " selected" : ""}`);
                 g.setAttribute("data-id", tdata.id);
+
+                // Evita rotate(undefined) (isso derruba o parsing do atributo transform e entope o console).
+                // Ctrl+F: Evita rotate(undefined)
+                const rot = Number.isFinite(+tdata.rotation) ? +tdata.rotation : 0;
                 g.setAttribute(
                     "transform",
-                    `translate(${tdata.x} ${tdata.y}) rotate(${tdata.rotation})`
+                    `translate(${tdata.x} ${tdata.y}) rotate(${rot})`
                 );
 
                 g.addEventListener("pointerdown", (ev) => { ev.stopPropagation(); onTextDown(ev, tdata.id); });
@@ -2731,8 +2739,12 @@ function renderSelectionRect() {
     function selectText(textId) {
         state.selectedTextId = textId;
         state.selectedEdgeId = null;
-        dom.textRotationRange.value = t.rotation || 0;
-        dom.textRotation.value = t.rotation || 0;
+        // BUGFIX v5.1.1: "t" não existia aqui (ReferenceError), quebrando seleção/drag de textos e shapes.
+        // Ctrl+F: BUGFIX v5.1.1: "t" não existia aqui
+        const t = findText(textId);
+        const rot = (t && Number.isFinite(+t.rotation)) ? +t.rotation : 0;
+        if (dom.textRotationRange) dom.textRotationRange.value = rot;
+        if (dom.textRotation) dom.textRotation.value = rot;
         state.selectedNodeIds.clear();
         refreshSidebar();
         renderAll();
