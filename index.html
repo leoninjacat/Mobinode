@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="./app_v5.0.0.css">
-  <title>Mobinode 5.0.0</title>
+  <link rel="stylesheet" href="./app.css"/>
+  <title>Mobinode 5.1.0</title>
 </head>
 
 <body>
@@ -23,6 +23,7 @@
               <button class="dropdown-item" id="menuExport" type="button">Exportar JSON…</button>
               <button class="dropdown-item" id="menuExportPNG" type="button">Exportar PNG…</button>
               <button class="dropdown-item" id="menuExportPDF" type="button">Exportar PDF…</button>
+              <button class="dropdown-item" id="menuSaveCache" type="button">Salvar em cache</button>
               <div class="dropdown-sep" role="separator"></div>
               <button class="dropdown-item danger" id="menuClear" type="button">Limpar…</button>
               <div class="dropdown-sep" role="separator"></div>
@@ -49,7 +50,6 @@
   <!-- Dock de ferramentas (desktop: lateral; mobile: inferior) -->
   <div id="dockTools" class="toolDock" role="toolbar" aria-label="Ferramentas">
     <div id="tools" class="toolgroup" aria-label="Ferramentas principais">
-
       <button id="toolStation" class="toolbtn" aria-pressed="false" title="Estação">
         <span class="tool-linebadge" aria-hidden="true">
           <span class="tool-linebadge-circle">
@@ -62,6 +62,7 @@
       <button id="toolConnections" class="toolbtn" aria-pressed="false" title="Conexões">⫘</button>
       <button id="toolCurves" class="toolbtn" aria-pressed="false" title="Curvas (editar dobras)">╮</button>
       <button id="toolText" class="toolbtn toolbtn-text" aria-pressed="false" title="Sinalização">📐</button>
+      <button id="toolShapes" class="toolbtn" aria-pressed="false" title="Formas">⚪</button>
     </div>
   </div>
 
@@ -91,7 +92,7 @@
   <aside id="sidebar">
     <header>
       <div>
-        <h3 id="sidebarTitle">Mobinode v5.0.0</h3>
+        <h3 id="sidebarTitle">Mobinode v5.1.1</h3>
         <div id="sidebarMeta" class="meta"></div>
       </div>
       <button id="btnCloseSidebar" class="iconbtn" title="Fechar">×</button>
@@ -204,6 +205,7 @@
                       <label>Forma</label>
                       <select id="stationStyleShape">
                         <option value="circle">Círculo</option>
+        <option value="arc">Arco</option>
                         <option value="square">Quadrado</option>
                         <option value="diamond">Losango</option>
                         <option value="pill">Pílula</option>
@@ -437,6 +439,7 @@
             <label for="connNodeShape">Forma</label>
             <select id="connNodeShape">
               <option value="circle">Círculo</option>
+        <option value="arc">Arco</option>
               <option value="pill">Pílula</option>
               <option value="square">Quadrado</option>
               <option value="diamond">Losango</option>
@@ -508,8 +511,24 @@
                 <input id="textSizeRange" type="range" min="8" max="120" step="1" />
                 <input id="textSize" type="number" min="8" max="120" step="1" class="num" />
               </div>
+
+              <div class="field">
+                <label for="textRotationRange">Rotação</label>
+                <input type="range" id="textRotationRange" min="0" max="360" step="1" value="0">
+                <input type="number" id="textRotation" min="0" max="360" step="1" value="0">
+              </div>
+
               <div class="smallnote">Dica: selecione um elemento no mapa e pressione <b>Delete</b> para apagar.</div>
             </div>
+
+          <div class="field">
+            <label>Cor do texto</label>
+            <div class="inline">
+              <input id="textColor" type="color" />
+              <input id="textColorHex" type="text" placeholder="auto" maxlength="7" />
+            </div>
+            <div class="smallnote">Dica: deixe o hex vazio (auto) para o texto seguir o tema (ou a cor da linha, no caso de nomes).</div>
+          </div>
 
           <div id="textPanel">
             <div class="section-title">Identificações</div>
@@ -526,11 +545,127 @@
               <div class="smallnote">Quando ativado, ao escolher um nome de linha acima você cria (ou transforma) um elemento com o círculo + o nome juntos.</div>
             </div>
             <div class="row">
+              <button id="btnDuplicateText" class="btn btn-ghost">Duplicar</button>
               <button id="btnDeleteText">Excluir elemento</button>
             </div>
           </div>
         </div>
       </section>
+
+      <section id="accShapes">
+  <summary>Formas e placas</summary>
+  <div class="acc-body">
+    <div id="shapesEmpty" class="empty-note">
+      Esse painel ainda está vazio. Aqui vai nascer o modo de criação de formas/placas. 😈
+    </div>
+
+    <div id="shapesPanel" style="display:none;">
+  <div class="panel-group">
+    <div class="panel-title">Criar forma</div>
+
+    <div class="field">
+      <label for="shapeKind">Tipo</label>
+      <select id="shapeKind">
+        <option value="rect" selected>Retângulo</option>
+        <option value="polygon">Polígono</option>
+        <option value="circle">Círculo</option>
+        <option value="arc">Arco</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <button id="btnShapeCreate" class="btn">Criar</button>
+      <button id="btnShapeDuplicate" class="btn btn-ghost" disabled>Duplicar</button>
+    </div>
+  </div>
+
+  <div class="panel-group">
+    <div class="panel-title">Cor e estilo</div>
+
+    <div class="field">
+      <label for="shapeFillMode">Cor</label>
+      <select id="shapeFillMode">
+        <option value="line" selected>Usar cor da linha</option>
+        <option value="custom">Cor personalizada</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="shapeFillColor">Personalizada</label>
+      <input id="shapeFillColor" type="color" value="#a020f0" />
+    </div>
+
+    <div class="slider-field">
+      <span class="smallnote" style="min-width:92px;">Opacidade</span>
+      <input id="shapeOpacity" type="range" min="0" max="1" step="0.05" value="1" />
+      <input id="shapeOpacityVal" type="number" min="0" max="1" step="0.05" class="num" />
+    </div>
+  </div>
+
+  <div class="panel-group">
+    <div class="panel-title">Dimensões</div>
+
+    <div class="slider-field" id="rowShapeW">
+      <span id="shapeWLabel" class="smallnote" style="min-width:92px;">Largura</span>
+      <input id="shapeW" type="range" min="40" max="2000" step="10" value="640" />
+      <input id="shapeWVal" type="number" min="40" max="2000" step="10" class="num" />
+    </div>
+
+    <div class="slider-field" id="rowShapeH">
+      <span class="smallnote" style="min-width:92px;">Altura</span>
+      <input id="shapeH" type="range" min="20" max="1200" step="10" value="140" />
+      <input id="shapeHVal" type="number" min="20" max="1200" step="10" class="num" />
+    </div>
+
+    <div class="slider-field" id="rowShapeRX">
+      <span class="smallnote" style="min-width:92px;">Cantos</span>
+      <input id="shapeRX" type="range" min="0" max="80" step="1" value="18" />
+      <input id="shapeRXVal" type="number" min="0" max="80" step="1" class="num" />
+    </div>
+
+
+    <div class="slider-field" id="rowShapeSides">
+      <span class="smallnote" style="min-width:92px;">Lados</span>
+      <input id="shapeSides" type="range" min="3" max="24" step="1" value="6" />
+      <input id="shapeSidesVal" type="number" min="3" max="24" step="1" class="num" />
+    </div>
+
+    <div id="arcControls" style="display:none; margin-top: 10px;">
+      <div class="panel-title" style="margin-top:10px;">Arco</div>
+
+      <div class="slider-field">
+        <span class="smallnote" style="min-width:120px;">Raio externo</span>
+        <input id="shapeArcR" type="range" min="10" max="800" step="2" value="80" />
+        <input id="shapeArcRVal" type="number" min="10" max="800" step="2" class="num" />
+      </div>
+
+      <div class="slider-field">
+        <span class="smallnote" style="min-width:120px;">Espessura</span>
+        <input id="shapeArcT" type="range" min="1" max="400" step="1" value="30" />
+        <input id="shapeArcTVal" type="number" min="1" max="400" step="1" class="num" />
+      </div>
+
+      <div class="slider-field">
+        <span class="smallnote" style="min-width:120px;">Ângulo inicial</span>
+        <input id="shapeArcA0" type="range" min="-360" max="360" step="1" value="-45" />
+        <input id="shapeArcA0Val" type="number" min="-360" max="360" step="1" class="num" />
+      </div>
+
+      <div class="slider-field">
+        <span class="smallnote" style="min-width:120px;">Ângulo final</span>
+        <input id="shapeArcA1" type="range" min="-360" max="360" step="1" value="225" />
+        <input id="shapeArcA1Val" type="number" min="-360" max="360" step="1" class="num" />
+      </div>
+    </div>
+
+    <div class="row">
+<button id="btnShapeDelete" class="btn btn-danger" disabled>Excluir</button>
+    </div>
+  </div>
+</div>
+
+  </div>
+</section>
 
       <section id="accMulti">
         <summary>Seleção</summary>
@@ -544,6 +679,7 @@
               <select id="multiStationStyleShape">
                 <option value="">— (misto)</option>
                 <option value="circle">Círculo</option>
+        <option value="arc">Arco</option>
                 <option value="square">Quadrado</option>
                 <option value="diamond">Losango</option>
                 <option value="pill">Pílula</option>
@@ -704,14 +840,14 @@
           </div>
 
           <div class="about-nav-secondary" aria-label="Links">
-            <button class="about-footer-link" type="button" data-about-action="donate">Doar</button>
-            <a class="about-footer-link" data-about-action="github" href="https://github.com/" target="_blank" rel="noreferrer">GitHub</a>
+            <!--button class="about-footer-link" type="button" data-about-action="donate">Doar</button-->
+            <a class="about-footer-link" data-about-action="github" href="https://github.com/leoninjacat/Mobinode" target="_blank" rel="noreferrer">GitHub</a>
           </div>
         </aside>
         <main class="about-details">
           <section class="about-pane active" data-about-pane="app">
             <h2>Mobinode</h2>
-            <h4>versão 5.0.0</h4>
+            <h4>versão 5.1.0</h4>
             <p>
               Mobinode é um editor visual para criar mapas esquemáticos de transporte (linhas, estações,
               integrações e textos) direto no navegador — rápido, leve e focado em clareza.
@@ -726,6 +862,8 @@
           <section class="about-pane" data-about-pane="news">
             <h2>Novidades</h2>
             <ul class="about-list">
+              <li><b>v5.1.x</b> — Implementado sistema de cache: Salve na memória do navegador o mapa que estiver trabalhando, para evitar perda de progresso.</li>
+              <li><b>v5.0.x</b> — Adição de formas ao mapa, como retângulos, círculos e arcos.</li>
               <li><b>v4.9.x</b> — Melhorias de usabilidade em dispositivos móveis.</li>
               <li><b>v4.8.x</b> — Exportação em arquivo PNG e PDF implementada.</li>
               <li><b>v4.7.x</b> — Evoluções no editor e qualidade de vida.</li>
@@ -1044,10 +1182,14 @@
       <path id="ghost" class="ghost" d="" style="display:none;"></path>
     </g>
   </svg>
-  <script src="./app_v5.0.0.part1.core.js"></script>
-  <script src="./app_v5.0.0.part2.ui.js"></script>
-  <script src="./app_v5.0.0.part3.interactions.js"></script>
-  <script src="./app_v5.0.0.part4.io_boot.js"></script>
+
+
+
+<script src="./core.js"></script>
+<script src="./ui.js"></script>
+<script src="./interactions.js"></script>
+<script src="./io_boot.js"></script>
+
 
   <script>
   (function(){
