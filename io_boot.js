@@ -4,7 +4,7 @@
  */
 
 "use strict";
-console.log("%c[IO_BOOT] CARREGADO: v5.1.1 SHAPES-TRANSFORM-FIX", "color:#0f0;font-weight:bold");
+console.log("%c[IO_BOOT] CARREGADO: v5.1.3 ROTATE-TOOL", "color:#0f0;font-weight:bold");
 
 
 // =========================
@@ -37,7 +37,10 @@ const MOBINODE_CACHE_KEY = "mobinode.cache.v1";
 // Ctrl+F: saveMapToBrowserCache
 function saveMapToBrowserCache() {
     const txt = exportJSON();
-    const payload = { savedAt: Date.now(), json: txt };
+    const payload = {
+        savedAt: Date.now(),
+        json: txt,
+    };
 
     try {
         localStorage.setItem(MOBINODE_CACHE_KEY, JSON.stringify(payload));
@@ -47,6 +50,7 @@ function saveMapToBrowserCache() {
         return false;
     }
 }
+
 
 // Ctrl+F: loadMapFromBrowserCache
 function loadMapFromBrowserCache() {
@@ -71,6 +75,95 @@ function loadMapFromBrowserCache() {
         return false;
     }
 }
+
+// =========================
+// Auto-save (cache do navegador)
+// =========================
+// Ctrl+F: Auto-save (cache do navegador)
+
+const AUTO_CACHE = {
+    enabled: true,
+
+    // salva após X ms sem interação (modo Canva)
+    idleMs: 5000,
+
+    // impede salvar em excesso
+    minGapMs: 12000,
+
+    // safety net
+    safetyIntervalMs: 60000,
+};
+
+
+let _cacheDirty = false;
+let _cacheIdleTimer = null;
+let _cacheLastSavedAt = 0;
+
+function markCacheDirty(reason = "unknown") {
+    _cacheDirty = true;
+    scheduleIdleSave(`idle:${reason}`);
+}
+
+function scheduleIdleSave(reason = "idle") {
+    if (!AUTO_CACHE.enabled) return;
+
+    if (_cacheIdleTimer) clearTimeout(_cacheIdleTimer);
+
+    _cacheIdleTimer = setTimeout(() => {
+        flushAutoCacheSave(reason);
+    }, AUTO_CACHE.idleMs);
+}
+
+function flushAutoCacheSave(reason = "flush") {
+    if (!AUTO_CACHE.enabled) return;
+    if (!_cacheDirty) return;
+
+    const now = Date.now();
+    if (now - _cacheLastSavedAt < AUTO_CACHE.minGapMs) {
+        const wait = AUTO_CACHE.minGapMs - (now - _cacheLastSavedAt);
+        if (_cacheIdleTimer) clearTimeout(_cacheIdleTimer);
+        _cacheIdleTimer = setTimeout(() => flushAutoCacheSave(`throttle:${reason}`), wait);
+        return;
+    }
+
+    const ok = saveMapToBrowserCache();
+    if (ok) {
+        _cacheDirty = false;
+        _cacheLastSavedAt = now;
+
+        if (typeof showToast === "function") {
+            showToast("Mapa atual salvo");
+        }
+
+        // console.log("Auto-cache saved ✅", reason);
+    }
+}
+
+
+function startAutoCacheSaver() {
+    if (!AUTO_CACHE.enabled) return;
+
+    setInterval(() => {
+        if (_cacheDirty) flushAutoCacheSave("safety");
+    }, AUTO_CACHE.safetyIntervalMs);
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "hidden") flushAutoCacheSave("visibility:hidden");
+        });
+
+            window.addEventListener("beforeunload", () => {
+                flushAutoCacheSave("beforeunload");
+            });
+
+            // “atividade” global: mouse, toque e teclado
+            const pokeIdle = () => { if (_cacheDirty) scheduleIdleSave("activity"); };
+
+            ["pointerdown","pointermove","pointerup","keydown","wheel","touchstart","touchmove"].forEach(evt => {
+                window.addEventListener(evt, pokeIdle, { passive: true });
+            });
+}
+
+
 
 
 // =========================
@@ -797,6 +890,16 @@ function bindUI() {
         setTool("shapes");
         showSidebar(true);
         openAccordion(dom.accShapes);
+        refreshSidebar();
+    });
+
+    // ✅ Rotação (painel universal)
+    // Ao clicar no ⟳, abrimos o painel Rotação no sidebar.
+    // Ctrl+F: toolRotate
+    if (dom.toolRotate) dom.toolRotate.addEventListener("click", () => {
+        setTool("rotate");
+        showSidebar(true);
+        openAccordion(dom.accRotation);
         refreshSidebar();
     });
 
@@ -3123,7 +3226,8 @@ function bindUI() {
         }
 
         // =========================
-        // Rotação do texto (v5.0.4)
+        // Rotação (universal) — texto/sinalização + shapes
+        // Ctrl+F: Rotação (universal) — texto/sinalização + shapes
         // =========================
         function clampDeg(v){
             const n = parseInt(v, 10);
@@ -3131,29 +3235,18 @@ function bindUI() {
             return Math.max(0, Math.min(360, n));
         }
 
-        if (dom.textRotation || dom.textRotationRange) {
+        if (dom.rotationRange || dom.rotationValue) {
             const keyForRot = () => state.selectedTextId ? `text:${state.selectedTextId}:rotation` : null;
-
-            // agrupamento no histórico (igual ao size)
-            if (dom.textRotationRange) {
-                dom.textRotationRange.addEventListener("focus", () => beginGroupedEdit(keyForRot()));
-                dom.textRotationRange.addEventListener("blur",  () => endGroupedEdit(keyForRot()));
-            }
-            if (dom.textRotation) {
-                dom.textRotation.addEventListener("focus", () => beginGroupedEdit(keyForRot()));
-                dom.textRotation.addEventListener("blur",  () => endGroupedEdit(keyForRot()));
-            }
 
             const applyRotation = (raw) => {
                 if (sidebarIsUpdating) return;
-
                 const deg = clampDeg(raw);
 
-                // sem seleção: define o padrão pro próximo texto
+                // sem seleção: só guarda como default pro próximo texto/sinalização
                 if (!state.selectedTextId) {
                     state.textNextRotation = deg;
-                    if (dom.textRotation) dom.textRotation.value = String(deg);
-                    if (dom.textRotationRange) dom.textRotationRange.value = String(deg);
+                    if (dom.rotationValue) dom.rotationValue.value = String(deg);
+                    if (dom.rotationRange) dom.rotationRange.value = String(deg);
                     refreshSidebarPreserveInput();
                     return;
                 }
@@ -3164,19 +3257,41 @@ function bindUI() {
                 ensureGroupedHistory(`text:${state.selectedTextId}:rotation`);
                 t.rotation = deg;
 
-                if (dom.textRotation) dom.textRotation.value = String(deg);
-                if (dom.textRotationRange) dom.textRotationRange.value = String(deg);
+                if (dom.rotationValue) dom.rotationValue.value = String(deg);
+                if (dom.rotationRange) dom.rotationRange.value = String(deg);
 
                 renderAll();
                 refreshSidebarPreserveInput();
             };
 
-            if (dom.textRotationRange) {
-                dom.textRotationRange.addEventListener("input", () => applyRotation(dom.textRotationRange.value));
+            // agrupamento no histórico (igual ao size)
+            if (dom.rotationRange) {
+                dom.rotationRange.addEventListener("focus", () => beginGroupedEdit(keyForRot()));
+                dom.rotationRange.addEventListener("blur",  () => endGroupedEdit(keyForRot()));
+                dom.rotationRange.addEventListener("input", () => applyRotation(dom.rotationRange.value));
             }
-            if (dom.textRotation) {
-                dom.textRotation.addEventListener("input", () => applyRotation(dom.textRotation.value));
+            if (dom.rotationValue) {
+                dom.rotationValue.addEventListener("focus", () => beginGroupedEdit(keyForRot()));
+                dom.rotationValue.addEventListener("blur",  () => endGroupedEdit(keyForRot()));
+                dom.rotationValue.addEventListener("input", () => applyRotation(dom.rotationValue.value));
             }
+
+            // Presets
+            const bindPreset = (el, deg) => {
+                if (!el) return;
+                el.addEventListener("click", () => applyRotation(deg));
+            };
+            bindPreset(dom.rotPreset0, 0);
+            bindPreset(dom.rotPreset90, 90);
+            bindPreset(dom.rotPreset180, 180);
+            bindPreset(dom.rotPreset270, 270);
+            bindPreset(dom.rotPreset45, 45);
+            bindPreset(dom.rotPreset135, 135);
+            bindPreset(dom.rotPreset225, 225);
+            bindPreset(dom.rotPreset315, 315);
+
+            // Reset
+            if (dom.btnRotationReset) dom.btnRotationReset.addEventListener("click", () => applyRotation(0));
         }
 
 
@@ -3450,7 +3565,17 @@ function boot() {
     updateCursor();
     showSidebar(true);
 
-    console.log("Mobinode: app.js carregou ✅ (v5.1.1)");
+    console.log("Mobinode: app.js carregou ✅ (v5.1.3)");
 }
+
+// Ctrl+F: AUTO_RESTORE_CACHE
+const restored = loadMapFromBrowserCache();
+if (restored) {
+    setTool("network");
+}
+
+// liga auto-save
+startAutoCacheSaver();
+
 
 boot();

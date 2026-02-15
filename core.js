@@ -344,6 +344,7 @@ function makeStationShapeEl(shape, cx, cy, r, wMul = 1, hMul = 1) {
  toolCurves: $("toolCurves"),
  toolSelect: $("toolSelect"),
  toolShapes: $("toolShapes"),
+ toolRotate: $("toolRotate"),
 
 
  btnUndo: $("btnUndo"),
@@ -630,8 +631,24 @@ function makeStationShapeEl(shape, cx, cy, r, wMul = 1, hMul = 1) {
  btnTextBold: $("btnTextBold"),
  btnTextItalic: $("btnTextItalic"),
 	btnDuplicateText: $("btnDuplicateText"),
-	textRotationRange: $("textRotationRange"),
-	textRotation: $("textRotation"),
+
+    // ✅ Rotação (painel universal)
+    // Ctrl+F: Rotação (painel universal)
+    accRotation: $("accRotation"),
+    rotationEmpty: $("rotationEmpty"),
+    rotationPanel: $("rotationPanel"),
+    rotationSelected: $("rotationSelected"),
+    rotationRange: $("rotationRange"),
+    rotationValue: $("rotationValue"),
+    rotPreset0: $("rotPreset0"),
+    rotPreset90: $("rotPreset90"),
+    rotPreset180: $("rotPreset180"),
+    rotPreset270: $("rotPreset270"),
+    rotPreset45: $("rotPreset45"),
+    rotPreset135: $("rotPreset135"),
+    rotPreset225: $("rotPreset225"),
+    rotPreset315: $("rotPreset315"),
+    btnRotationReset: $("btnRotationReset"),
 
  btnDeleteText: $("btnDeleteText"),
     };
@@ -1808,6 +1825,12 @@ function renderLineEndpointBadges() {
         if (history.undo.length > history.max) history.undo.shift();
         history.redo.length = 0;
         updateUndoRedoButtons();
+
+        if (typeof markCacheDirty === "function") {
+            try { markCacheDirty("pushHistory"); } catch (_) {}
+        }
+
+
     }
 
     function undo() {
@@ -2741,10 +2764,8 @@ function renderSelectionRect() {
         state.selectedEdgeId = null;
         // BUGFIX v5.1.1: "t" não existia aqui (ReferenceError), quebrando seleção/drag de textos e shapes.
         // Ctrl+F: BUGFIX v5.1.1: "t" não existia aqui
-        const t = findText(textId);
-        const rot = (t && Number.isFinite(+t.rotation)) ? +t.rotation : 0;
-        if (dom.textRotationRange) dom.textRotationRange.value = rot;
-        if (dom.textRotation) dom.textRotation.value = rot;
+        // A rotação agora é controlada pelo painel "Rotação" (não mais no painel de texto).
+        // O refreshSidebar cuida de sincronizar os inputs.
         state.selectedNodeIds.clear();
         refreshSidebar();
         renderAll();
@@ -3155,25 +3176,8 @@ function deleteEdge(edgeId) {
         return t;
     }
 
-    function applyTextRotation(v) {
-        const id = state.selectedTextId;
-        if (!id) return;
-        const t = state.texts.find(tt => tt.id === id);
-        if (!t) return;
-
-        t.rotation = clamp(parseInt(v) || 0, 0, 360);
-        renderAll();
-    }
-
-    dom.textRotationRange?.addEventListener("input", e => {
-        dom.textRotation.value = e.target.value;
-        applyTextRotation(e.target.value);
-    });
-
-    dom.textRotation?.addEventListener("input", e => {
-        dom.textRotationRange.value = e.target.value;
-        applyTextRotation(e.target.value);
-    });
+    // Rotação agora é gerenciada no io_boot.js via painel "Rotação".
+    // Ctrl+F: Rotação agora é gerenciada no io_boot.js
 
 
     function deleteText(textId) {
@@ -3294,6 +3298,7 @@ function nearestNode(worldPt, radius = CFG.CONNECT_SNAP_RADIUS) {
         setActive(dom.toolText, state.tool === "text");
         setActive(dom.toolSelect, state.tool === "select");
         setActive(dom.toolShapes, state.tool === "shapes");
+        setActive(dom.toolRotate, state.tool === "rotate");
 
 
         // v4.9.2: botão 🤚/👊 (mover vs drag/criar)

@@ -1418,6 +1418,24 @@ html[data-theme="light"] .radio-option:hover{
 
 .panel-group { padding: 10px 0; border-top: 1px solid rgba(255,255,255,0.08); }
 .panel-title { font-weight: 700; margin: 6px 0 10px; opacity: 0.95; }
+
+/* =========================
+   Rotação (painel universal)
+   Ctrl+F: Rotação (painel universal)
+   ========================= */
+.rot-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; }
+
+.rotbtn{
+  padding:10px 10px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  cursor:pointer;
+  font-weight:600;
+}
+.rotbtn:hover{ filter: brightness(1.05); }
+.rotbtn:active{ transform: translateY(1px); }
 .row { display: grid; grid-template-columns: 120px 1fr; gap: 10px; align-items: center; margin: 8px 0; }
 .row > button { grid-column: span 1; }
 .mini { opacity: 0.75; font-size: 12px; padding-left: 6px; }
@@ -1501,3 +1519,39 @@ html[data-theme="light"] .radio-option:hover{
 
 /* v5.0.9 — slider cohesion pass | Ctrl+F: slider cohesion pass */
 .slider-field > span{ flex: 0 0 auto; }
+
+/* =========================
+   Toast (Android-style)
+   =========================
+   Ctrl+F: toastHost
+*/
+
+#toastHost {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 18px;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+#toastHost .toast {
+  max-width: 92vw;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  line-height: 1.25;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+#toastHost .toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}

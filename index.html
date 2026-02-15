@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="./app.css"/>
-  <title>Mobinode 5.1.0</title>
+  <title>Mobinode 5.1.2</title>
 </head>
 
 <body>
@@ -32,7 +32,6 @@
             </div>
           </div>
             <button aria-pressed="false" title="Seta">➚</button>
-
             <button id="toolPan" class="toolbtn" aria-pressed="false" title="Pan">✥</button>
             <button id="toolSelect" class="toolbtn" aria-pressed="false" title="Seleção retangular">⛶</button>
             <button id="btnUndo" title="Desfazer (Ctrl+Z)">↺</button>
@@ -92,7 +91,7 @@
   <aside id="sidebar">
     <header>
       <div>
-        <h3 id="sidebarTitle">Mobinode v5.1.1</h3>
+        <h3 id="sidebarTitle">Mobinode v5.1.2</h3>
         <div id="sidebarMeta" class="meta"></div>
       </div>
       <button id="btnCloseSidebar" class="iconbtn" title="Fechar">×</button>
@@ -148,7 +147,7 @@
 
 <div class="field" id="stationSuffixField" style="display:none;">
   <label for="stationSuffix">Sufixo (abaixo)</label>
-  <input id="stationSuffix" type="text" placeholder="Ex.: Rede Gatos / Ultrafarma" />
+  <input id="stationSuffix" type="text" placeholder="Ex.: Pernambucanas/Ultrafarma" />
   <div class="smallnote">Também aceita “/” ou Enter pra virar múltiplas linhas pequenas.</div>
 </div>
             <div class="field">
@@ -181,15 +180,15 @@
     <input id="stationLabelOffsetY" class="num" type="number" min="-120" max="120" step="1" value="0" />
   </div>
 
-  <div class="row" style="margin-top:8px;">
-    <button id="btnStationLabelOffsetReset" type="button">Resetar ajuste fino</button>
+  <div class="field" style="margin-top:8px;">
+    <button id="btnStationLabelOffsetReset" type="button">Redefinir ajuste fino</button>
   </div>
 
   <div class="smallnote">Move o nome em X/Y sem mexer na orientação. Ótimo pra alinhar em casos chatos.</div>
 </div>
 
 
-            <div class="row" style="margin-top:10px;">
+            <div class="field" style="margin-top:10px;">
               <button id="applyStationOrientationActiveLine" type="button">
                 Aplicar orientação em toda a linha
               </button>
@@ -251,7 +250,10 @@
                   </div>
 
                   <button id="applyStationStyleActiveLine" type="button">
-                    Aplicar a todas as estações da linha ativa
+                    Aplicar às estações da linha ativa
+                  </button>
+                  <button id="applyStationStyleAllStations" type="button">
+                    Aplicar a todas as estações
                   </button>
                   <button id="applyStationStyleSelection" type="button" style="display:none;">
                     Aplicar às estações selecionadas
@@ -512,12 +514,6 @@
                 <input id="textSize" type="number" min="8" max="120" step="1" class="num" />
               </div>
 
-              <div class="field">
-                <label for="textRotationRange">Rotação</label>
-                <input type="range" id="textRotationRange" min="0" max="360" step="1" value="0">
-                <input type="number" id="textRotation" min="0" max="360" step="1" value="0">
-              </div>
-
               <div class="smallnote">Dica: selecione um elemento no mapa e pressione <b>Delete</b> para apagar.</div>
             </div>
 
@@ -577,6 +573,9 @@
       <button id="btnShapeCreate" class="btn">Criar</button>
       <button id="btnShapeDuplicate" class="btn btn-ghost" disabled>Duplicar</button>
     </div>
+              <div class="field">
+            <button id="btnShapeDelete" class="btn btn-danger" disabled>Excluir</button>
+          </div>
   </div>
 
   <div class="panel-group">
@@ -658,9 +657,49 @@
       </div>
     </div>
 
-    <div class="row">
-<button id="btnShapeDelete" class="btn btn-danger" disabled>Excluir</button>
-    </div>
+    <div id="rotationPanel" style="display:block;">
+            <div class="field">
+            <div class="panel-title">Rotacionar</div>
+              <label for="rotationSelected">Item selecionado</label>
+              <select id="rotationSelected"></select>
+              <div class="smallnote">Atualmente o Mobinode aplica rotação em <b>texto/sinalização</b> e <b>formas</b>. (Vem aí: rotação de outros elementos.)</div>
+            </div>
+
+            <div class="panel-group">
+              <div class="panel-title">Ângulos retos</div>
+              <div class="rot-grid">
+                <button id="rotPreset0"   class="rotbtn" type="button" title="0°">→ 0°</button>
+                <button id="rotPreset90"  class="rotbtn" type="button" title="90°">↓ 90°</button>
+                <button id="rotPreset180" class="rotbtn" type="button" title="180°">← 180°</button>
+                <button id="rotPreset270" class="rotbtn" type="button" title="270°">↑ 270°</button>
+              </div>
+            </div>
+
+            <div class="panel-group">
+              <div class="panel-title">Diagonais</div>
+              <div class="rot-grid">
+                <button id="rotPreset45"  class="rotbtn" type="button" title="45°">↘ 45°</button>
+                <button id="rotPreset135" class="rotbtn" type="button" title="135°">↙ 135°</button>
+                <button id="rotPreset225" class="rotbtn" type="button" title="225°">↖ 225°</button>
+                <button id="rotPreset315" class="rotbtn" type="button" title="315°">↗ 315°</button>
+              </div>
+            </div>
+
+            <div class="panel-group">
+              <div class="panel-title">Manual</div>
+              <div class="field">
+                <label for="rotationRange">Ângulo</label>
+                <div class="slider-field">
+                  <input id="rotationRange" type="range" min="0" max="360" step="1" value="0" />
+                  <input id="rotationValue" type="number" min="0" max="360" step="1" class="num" value="0" />
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <button id="btnRotationReset" class="btn btn-ghost" type="button">Redefinir</button>
+            </div>
+          </div>
   </div>
 </div>
 
@@ -759,7 +798,7 @@
   </div>
 
   <div class="row" style="margin-top:8px;">
-    <button id="btnMultiStationLabelOffsetReset" type="button">Resetar ajuste (seleção)</button>
+    <button id="btnMultiStationLabelOffsetReset" type="button">Redefinir ajuste (seleção)</button>
   </div>
 
   <div class="smallnote">Se aparecer “—”, é porque os valores das selecionadas estão diferentes. Mexer aplica em massa.</div>
@@ -847,7 +886,7 @@
         <main class="about-details">
           <section class="about-pane active" data-about-pane="app">
             <h2>Mobinode</h2>
-            <h4>versão 5.1.1</h4>
+            <h4>versão 5.1.2</h4>
             <p>
               Mobinode é um editor visual para criar mapas esquemáticos de transporte (linhas, estações,
               integrações e textos) direto no navegador — rápido, leve e focado em clareza.
@@ -927,7 +966,7 @@
                 <ul>
                   <li><b>Orientação</b>: gira o rótulo da estação (nome/prefixo/sufixo) ao redor da estação (↑ ↗ → ↘ ↓ ↙ ← ↖).</li>
                   <li><b>Ajuste fino X/Y</b>: desloca o texto sem mudar a orientação — perfeito pra “casos chatos” onde o nome colide com o traçado.</li>
-                  <li><b>Resetar ajuste fino</b>: volta os offsets para o padrão.</li>
+                  <li><b>Redefinir ajuste fino</b>: volta os offsets para o padrão.</li>
                   <li><b>Aplicar orientação em toda a linha</b>: usa a orientação atual como “carimbo” em massa na linha ativa.</li>
                 </ul>
 

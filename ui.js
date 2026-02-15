@@ -6,6 +6,47 @@
 "use strict";
 
 // =========================
+// Toast (Android-style)
+// =========================
+// Ctrl+F: function showToast(
+
+let __toastTimer = null;
+
+function ensureToastHost() {
+    // Ctrl+F: toastHost
+    let host = document.getElementById("toastHost");
+    if (!host) {
+        host = document.createElement("div");
+        host.id = "toastHost";
+        document.body.appendChild(host);
+    }
+    return host;
+}
+
+function showToast(message, opts = {}) {
+    const duration = Number.isFinite(opts.duration) ? opts.duration : 2200;
+
+    const host = ensureToastHost();
+    host.innerHTML = "";
+
+    const el = document.createElement("div");
+    el.className = "toast";
+    el.textContent = String(message || "");
+    host.appendChild(el);
+
+    // animate in
+    requestAnimationFrame(() => el.classList.add("show"));
+
+    if (__toastTimer) clearTimeout(__toastTimer);
+    __toastTimer = setTimeout(() => {
+        el.classList.remove("show");
+        setTimeout(() => {
+            if (el && el.parentNode) el.parentNode.removeChild(el);
+        }, 260);
+    }, duration);
+}
+
+// =========================
     // Sidebar / Panels
     // =========================
     // Ctrl+F: isMobileLayout
@@ -645,11 +686,23 @@ function setMetaPanelActive(which){
         text: dom.accText,
         multi: dom.accMulti,
         shapes: dom.accShapes,
+        rotation: dom.accRotation,
     };
     const active = map[which] || dom.accLine;
-    [dom.accLine, dom.accConnections, dom.accStation, dom.accText, dom.accMulti, dom.accShapes].forEach((d) => {
+    // rotaciona texto/sinalização e shapes (que vivem em texts)
+    // e também pode ser aberto manualmente pelo botão ⟳ na dock.
+    // Ctrl+F: shouldShowRotation
+    const shouldShowRotation = !!state.selectedTextId || state.tool === "rotate";
+
+    [dom.accLine, dom.accConnections, dom.accStation, dom.accText, dom.accMulti, dom.accShapes, dom.accRotation].forEach((d) => {
         if (!d) return;
         d.open = true;
+        // Em modo metapainel, a Rotação fica como um painel extra quando fizer sentido
+        // ou quando o usuário clicar no botão ⟳.
+        if (d === dom.accRotation) {
+            d.style.display = shouldShowRotation ? "block" : "none";
+            return;
+        }
         d.style.display = (d === active) ? "block" : "none";
     });
 }
@@ -680,7 +733,8 @@ if (state.propsMode === "metapanel") {
     if (lock) {
         // mantém o que já estava (sem trocar) — mas garante que algo está visível
         which = "line";
-    } else if (state.tool === "connections") which = "connections";
+    } else if (state.tool === "rotate") which = "rotation";
+    else if (state.tool === "connections") which = "connections";
     else if (state.tool === "shapes" || hasShape) which = "shapes";
     else if (hasText || state.tool === "text") which = "text";
     else if (hasEdge) which = "line";
@@ -752,6 +806,47 @@ if (state.propsMode === "metapanel") {
         setSectionState(dom.accMulti, dom.multiEmpty, dom.multiPanel, selCount > 1 && !lock && !hasEdge && !hasText);
         // ✅ Sinalização deve ficar usável quando a ferramenta 📐 estiver ativa
         setSectionState(dom.accText, dom.textEmpty, dom.textPanel, !lock && (state.tool === "text" || (hasText && !hasShape)));
+
+        // =========================
+        // Rotação (universal)
+        // Ctrl+F: Rotação (universal)
+        // =========================
+        const canRotate = !lock && !!selTextObj; // texto/sinalização ou shape (que mora em texts)
+        setSectionState(dom.accRotation, dom.rotationEmpty, dom.rotationPanel, canRotate);
+        if (canRotate && dom.rotationPanel) {
+            sidebarIsUpdating = true;
+            try {
+                // popula "Item selecionado" (por enquanto é um item só — já preparado pra multi no futuro)
+                if (dom.rotationSelected) {
+                    const id = String(selTextObj.id || "");
+                    const kind = String(selTextObj.kind || "text");
+                    const labelMap = {
+                        shapeRect: "Retângulo",
+                        shapeCircle: "Círculo",
+                        shapeArc: "Arco",
+                        shapePoly: "Polígono",
+                        badge: "Identificação",
+                        name: "Nome de linha",
+                        badgeName: "Identificação + nome",
+                        text: "Texto",
+                    };
+                    const label = (labelMap[kind] || "Elemento") + ` (ID ${id.slice(0, 4)}…)`;
+
+                    dom.rotationSelected.innerHTML = "";
+                    const opt = document.createElement("option");
+                    opt.value = id;
+                    opt.textContent = label;
+                    dom.rotationSelected.appendChild(opt);
+                    dom.rotationSelected.value = id;
+                }
+
+                const rot = Number.isFinite(+selTextObj.rotation) ? clamp(parseInt(selTextObj.rotation, 10) || 0, 0, 360) : 0;
+                if (dom.rotationRange) dom.rotationRange.value = String(rot);
+                if (dom.rotationValue) dom.rotationValue.value = String(rot);
+            } finally {
+                sidebarIsUpdating = false;
+            }
+        }
         if (state.propsMode !== "metapanel") {
 
         if (!lock) {
