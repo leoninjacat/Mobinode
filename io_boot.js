@@ -1,10 +1,10 @@
 /* Mobinode - split bundle (part 4/4)
- * v4.4.5
+ * v5.2.2
  * Conteúdo: IO (import/export/clear), bindings, linhas, boot
  */
 
 "use strict";
-console.log("%c[IO_BOOT] CARREGADO: v5.1.3 ROTATE-TOOL", "color:#0f0;font-weight:bold");
+console.log("%c[IO_BOOT] CARREGADO: v5.2.2", "color:#0f0;font-weight:bold");
 
 
 // =========================
@@ -12,7 +12,7 @@ console.log("%c[IO_BOOT] CARREGADO: v5.1.3 ROTATE-TOOL", "color:#0f0;font-weight
 // =========================
 function exportJSON() {
     const payload = {
-        version: "4.8.1",
+        version: "5.2.0",
         state: {
             nodes: state.nodes,
             edges: state.edges,
@@ -849,32 +849,85 @@ function bindUI() {
         }
     }
     if (dom.toolPointer) dom.toolPointer.addEventListener("click", () => {
+        // Modo mobile: a cruz de setas é só "voltar ao neutro" (sem abrir painéis).
+        // Ctrl+F: dom.toolPointer.addEventListener("click"
         setTool("neutral");
+
+        const mobile = (typeof isMobileLayout === "function" && isMobileLayout());
+        if (mobile) {
+            refreshSidebar();
+            return;
+        }
+
         showSidebar(true);
         openAccordion(dom.accLine);
         refreshSidebar();
     });
 
+    // botão Pan
     if (dom.toolPan) dom.toolPan.addEventListener("click", () => {
-        setTool("pan");
-        showSidebar(true);
-        openAccordion(dom.accLine);
-        refreshSidebar();
-    });
-    if (dom.toolStation) dom.toolStation.addEventListener("click", () => {
-        setTool("network");
-        showSidebar(true);
-        openAccordion(dom.accStation);
+        const next = (state.tool === "pan") ? "neutral" : "pan";
+        setTool(next);
+        try { showSidebar(next !== "pan"); } catch {}
         refreshSidebar();
     });
 
-    // v4.9.2: alterna entre mover (🤚) e arrastar/criar (👊)
-    if (dom.btnDragMode) dom.btnDragMode.addEventListener("click", () => {
-        state.nodeDragMode = (state.nodeDragMode === "drag") ? "move" : "drag";
-        try { if (typeof updateDragModeButtonUI === "function") updateDragModeButtonUI(); } catch {}
-        updateCursor();
+
+    // =========================
+    // Ferramentas 2-estados (sem botão drag/move)
+    // Estação / Linhas / Conexões
+    // 1º clique: mover apenas
+    // 2º clique: criar/conectar (armed)
+    // =========================
+    // Ctrl+F: toggleTwoStateTool
+    function toggleTwoStateTool(tool, accordionEl, opts = {}) {
+        if (!state.toolModes) state.toolModes = { network: "move", line: "move", connections: "move" };
+
+        const already = (state.tool === tool);
+
+        if (!already) {
+            // 1º clique: entra na ferramenta (modo padrão: move)
+            setTool(tool);
+        } else {
+            // 2º clique: alterna move <-> drag (criar/conectar)
+            const cur = state.toolModes[tool] || "move";
+            state.toolModes[tool] = (cur === "drag") ? "move" : "drag";
+
+            // 🔥 pulo do gato: força refresh total da ferramenta
+            setTool(tool);
+        }
+
+        if (opts.clearSelection) clearSelection();
+
+        showSidebar(true);
+        if (accordionEl) openAccordion(accordionEl);
+        refreshSidebar();
+    }
+
+
+    // Ctrl+F: dom.toolStation.addEventListener("click"
+    if (dom.toolStation) dom.toolStation.addEventListener("click", () => {
+        toggleTwoStateTool("network", dom.accStation);
     });
-    if (dom.toolText) dom.toolText.addEventListener("click", () => {
+
+    // Ctrl+F: dom.toolLine.addEventListener("click"
+    if (dom.toolLine) dom.toolLine.addEventListener("click", () => {
+        toggleTwoStateTool("line", dom.accLine, { clearSelection: true });
+    });
+
+    // Ctrl+F: dom.toolConnections.addEventListener("click"
+    if (dom.toolConnections) dom.toolConnections.addEventListener("click", () => {
+        toggleTwoStateTool("connections", dom.accConnections, { clearSelection: true });
+    });
+
+    // Botões da tooldock
+    // Ctrl+F: dom.toolLine.addEventListener("click"
+    // (v5.1.7) handler de Linhas agora é 2-estados e fica no bloco toggleTwoStateTool.
+
+    // Ctrl+F: dom.toolConnections.addEventListener("click"
+    // (v5.1.7) handler de Conexões agora é 2-estados e fica no bloco toggleTwoStateTool.
+
+if (dom.toolText) dom.toolText.addEventListener("click", () => {
         setTool("text");
         // Por padrão, a ferramenta 📐 volta para "texto livre".
         // A sinalização (badge/nome) é escolhida nos pickers do painel.
@@ -1169,23 +1222,6 @@ function bindUI() {
         openAccordion(dom.accMulti);
         refreshSidebar();
     });
-
-    if (dom.toolLine) dom.toolLine.addEventListener("click", () => {
-        clearSelection();
-        setTool("line");
-        showSidebar(true);
-        openAccordion(dom.accLine);
-        refreshSidebar();
-    });
-
-    if (dom.toolConnections) dom.toolConnections.addEventListener("click", () => {
-        // Por enquanto, é só um painel placeholder (sem ferramenta ainda)
-        setTool("connections");
-        showSidebar(true);
-        openAccordion(dom.accConnections);
-        refreshSidebar();
-    });
-
     if (dom.toolCurves) dom.toolCurves.addEventListener("click", () => {
         // Mantém a seleção (faz sentido editar a dobra da conexão selecionada)
         setTool("curves");
@@ -1206,14 +1242,88 @@ function bindUI() {
     // =========================
     // Arquivo / JSON modal
     // =========================
+    // Ctrl+F: Arquivo / JSON modal
+    function closeAllMenus() {
+        document.querySelectorAll("#ui .dropdown.open").forEach((d) => d.classList.remove("open"));
+    }
+
+    // mantém compatibilidade: vários handlers antigos chamam closeFileMenu()
     function closeFileMenu() {
-        if (!dom.fileDropdown) return;
-        dom.fileDropdown.classList.remove("open");
+        closeAllMenus();
+    }
+
+    function toggleMenu(drop) {
+        if (!drop) return;
+        const wasOpen = drop.classList.contains("open");
+        closeAllMenus();
+        if (!wasOpen) drop.classList.add("open");
     }
 
     function toggleFileMenu() {
-        if (!dom.fileDropdown) return;
-        dom.fileDropdown.classList.toggle("open");
+        toggleMenu(dom.fileDropdown);
+    }
+
+    // desktop: redistribui itens do menu Arquivo para outros dropdowns
+    function isMobileUI() {
+        return window.matchMedia("(max-width: 820px)").matches;
+    }
+
+    function moveMenuItem(el, targetMenu) {
+        if (!el || !targetMenu) return;
+        targetMenu.appendChild(el);
+    }
+
+    function redistributeTopMenus() {
+        const fileMenu = dom.fileMenu || dom.fileDropdown?.querySelector(".dropdown-menu");
+        if (!fileMenu) return;
+
+        const mobile = isMobileUI();
+
+        // itens existentes (um único conjunto — a gente só move entre menus)
+        const items = {
+            novo: dom.menuNewProject,
+            importar: dom.menuImport,
+            exportar: dom.menuExport,
+            exportPNG: dom.menuExportPNG,
+            exportPDF: dom.menuExportPDF,
+            saveCache: dom.menuSaveCache,
+            limpar: dom.menuClear,
+            config: dom.btnConfig,
+            about: dom.btnAbout,
+        };
+
+        if (mobile) {
+            // mobile: tudo volta pro hambúrguer
+            Object.values(items).forEach((el) => moveMenuItem(el, fileMenu));
+
+            // rótulos "clássicos" no menu Arquivo (mobile)
+            if (items.config) { items.config.textContent = "Configurações"; items.config.title = "Configurações"; }
+            if (items.about)  { items.about.textContent  = "Sobre";          items.about.title  = "Sobre"; }
+
+            return;
+        }
+
+        // desktop: distribui pelos menus de cima
+        // Arquivo
+        moveMenuItem(items.novo, fileMenu);
+        moveMenuItem(items.saveCache, fileMenu);
+        moveMenuItem(items.limpar, fileMenu);
+
+        // Importar
+        moveMenuItem(items.importar, dom.importMenu);
+
+        // Exportar
+        moveMenuItem(items.exportar, dom.exportMenu);
+        moveMenuItem(items.exportPNG, dom.exportMenu);
+        moveMenuItem(items.exportPDF, dom.exportMenu);
+
+        // Configurações e Sobre (dropdown único)
+        moveMenuItem(items.config, dom.settingsMenu);
+        moveMenuItem(items.about, dom.settingsMenu);
+
+        // rótulos no desktop (ficam mais "limpos")
+        if (items.config) { items.config.textContent = "Ajustes";        items.config.title = "Ajustes"; }
+        if (items.about)  { items.about.textContent  = "Ajuda e Sobre";  items.about.title  = "Ajuda e Sobre"; }
     }
 
     function openModal({ title, value, readOnly = false, primaryText = "OK", secondaryText = "Cancelar", tertiaryText = null, onPrimary = null, onTertiary = null }) {
@@ -1288,15 +1398,27 @@ function bindUI() {
         }
     }
 
-    if (dom.btnFile) {
-        dom.btnFile.addEventListener("click", (ev) => {
+    // menus do topo (abre 1 por vez; fecha ao clicar fora / ESC)
+    document.querySelectorAll("#ui .dropdown > button").forEach((btn) => {
+        btn.addEventListener("click", (ev) => {
             ev.stopPropagation();
-            toggleFileMenu();
+            toggleMenu(btn.parentElement);
         });
-    }
-    document.addEventListener("click", () => closeFileMenu());
+    });
+    document.addEventListener("click", () => closeAllMenus());
     document.addEventListener("keydown", (ev) => {
-        if (ev.key === "Escape") closeFileMenu();
+        if (ev.key === "Escape") closeAllMenus();
+    });
+
+    // Ctrl+F: redistributeTopMenus
+    redistributeTopMenus();
+    window.addEventListener("resize", () => {
+        redistributeTopMenus();
+        closeAllMenus();
+
+
+        // Ctrl+F: enforceMobileDockRules
+        if (window.enforceMobileDockRules) window.enforceMobileDockRules();
     });
 
         // Configurações / Sobre (v4.4.1)
@@ -3514,20 +3636,24 @@ function boot() {
 
     initTheme();
     initDockPosition();
+
+    if (window.enforceMobileDockRules) window.enforceMobileDockRules();
+
     applyPropsMode();
 
     ensureAtLeastOneLine();
     ensureAllTexts();
     normalizeSignagePreset();
     updateStationToolBadge();
-    setTool("network");
+    setTool("neutral");
 
     history.undo.length = 0;
     history.redo.length = 0;
     updateUndoRedoButtons();
 
     bindUI();
-
+    placeHelpButtonByLayout();
+    window.addEventListener("resize", placeHelpButtonByLayout);
 
 
     // v4.6.2: fallback — se algum pointer-capture ficar preso no viewport,
@@ -3555,7 +3681,7 @@ function boot() {
     const restored = loadMapFromBrowserCache();
     if (restored) {
         // opcional: garantir ferramenta padrão e UI consistente
-        setTool("network");
+        setTool("neutral");
     }
 
 
@@ -3563,19 +3689,66 @@ function boot() {
     renderAll();
     refreshSidebar();
     updateCursor();
-    showSidebar(true);
 
-    console.log("Mobinode: app.js carregou ✅ (v5.1.3)");
+    // Mobile: começa com todos os flyouts fechados e sidebar recolhida.
+    // Ctrl+F: Mobile: começa com todos os flyouts fechados
+    if (typeof isMobileLayout === "function" && isMobileLayout()) {
+        try { closeAllAccordions(); } catch (e) {}
+        try { showHelpPanel(false); } catch (e) {}
+        showSidebar(false);
+    } else {
+        showSidebar(true);
+    }
+
+    // Reposiciona o botão de ajuda rápida conforme layout (mobile vs desktop)
+    // Ctrl+F: placeHelpButtonByLayout
+    try { if (typeof placeHelpButtonByLayout === "function") placeHelpButtonByLayout(); } catch (e) {}
+
+    // Responsivo: se o usuário redimensionar a janela, o botão vai junto.
+    // Ctrl+F: __helpBtnResizeBound
+    try {
+        if (!window.__helpBtnResizeBound) {
+            window.__helpBtnResizeBound = true;
+            let t = null;
+            window.addEventListener("resize", () => {
+                if (t) clearTimeout(t);
+                t = setTimeout(() => {
+                    try { if (typeof placeHelpButtonByLayout === "function") placeHelpButtonByLayout(); } catch (e) {}
+                }, 120);
+            });
+        }
+    } catch (e) {}
+
+
+    console.log("Mobinode: app.js carregou ✅ (v5.2.2)");
 }
 
 // Ctrl+F: AUTO_RESTORE_CACHE
 const restored = loadMapFromBrowserCache();
 if (restored) {
-    setTool("network");
+    setTool("neutral");
 }
 
 // liga auto-save
 startAutoCacheSaver();
+
+// Ctrl+F: placeHelpButtonByLayout
+function placeHelpButtonByLayout(){
+    const btn = dom.btnHelp;
+    if (!btn) return;
+
+    const topbarRight = document.getElementById("topbar-right");
+    const helpCorner = document.getElementById("helpCorner");
+
+    const isMobile = window.matchMedia("(max-width: 900px)").matches;
+
+    if (isMobile) {
+        if (topbarRight && btn.parentElement !== topbarRight) topbarRight.appendChild(btn);
+    } else {
+        if (helpCorner && btn.parentElement !== helpCorner) helpCorner.appendChild(btn);
+    }
+}
+
 
 
 boot();

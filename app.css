@@ -27,6 +27,126 @@ box-shadow: 0 10px 30px rgba(0,0,0,.4);
 max-width: calc(100vw - 24px);
 }
 
+/*
+  ✅ Correção desktop: botões da barra superior precisam ser “quadradinhos”
+  (sem herdar o padding do button global, que estica e deixa o layout esquisito)
+  Ctrl+F: Correção desktop: botões da barra superior
+*/
+/* Ajuda continua quadradinho em todos os modos */
+#ui #topbarRight #btnHelp{
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-size: 18px;
+}
+
+/* Botões do menubar (desktop) */
+#ui .menubtn{
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* Arquivo: desktop mostra texto; mobile vira hambúrguer */
+#ui #btnFile .btnFileIcon{ display:none; }
+#ui #btnFile .btnFileText{ display:inline; }
+
+/* Botão hambúrguer dedicado (só no mobile) */
+#ui #btnMobileMenu{ display:none; }
+
+/* Menus desktop aparecem só no desktop */
+#ui .desktopMenus{ display: inline-flex; }
+
+@media (max-width: 820px){
+  /*
+    ✅ Mobile layout “app nativo”
+    Querido pelo Leozinho: hambúrguer à esquerda, nome centralizado, ajuda à direita.
+    Implementação robusta: flex + título centralizado via position:absolute
+    (evita depender de display: contents, que pode falhar em alguns cenários)
+    Ctrl+F: Mobile layout “app nativo”
+  */
+  #ui{
+    left: 12px;
+    right: 12px;
+    width: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    z-index: 1000;
+  }
+
+  /* Título centralizado de verdade */
+  .appname{
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    white-space: nowrap;
+    max-width: calc(100% - 120px); /* 2 botões (40px) + respiro */
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Lados ancorados */
+  .topbar-left,
+  .topbar-right{
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Mobile: esconde a versão pra manter “Mobinode” limpo e central */
+  .appname .ver{ display:none; }
+
+  /* No mobile o separador não faz sentido */
+  .sep{ display: none; }
+
+  /* mobile: usa o hambúrguer dedicado; botão “Arquivo” (desktop) some */
+  #ui #btnFile{ display:none; }
+  #ui #btnMobileMenu{
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 12px;
+    font-size: 18px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* garante que o dropdown abra alinhado ao hambúrguer */
+  #fileDropdown{ position: relative; }
+  #fileDropdown .dropdown-menu{
+  left: 0;
+  right: auto;
+    z index: 99999;
+  }
+
+  #ui .desktopMenus{ display:none; }
+}
+
+/* garante que os itens do menu dropdown continuem “retangulares normais” */
+#ui .dropdown-menu .dropdown-item{
+  width: 100%;
+  height: auto;
+  padding: 10px 10px;
+  border-radius: 8px;
+  display: block;
+}
+
 .mobinode-doc{
   height: auto;
 }
@@ -140,6 +260,15 @@ button:disabled{
   border-color: rgba(255,215,120,.55);
 }
 
+/* 2º estado (modo criar/conectar) */
+.toolbtn.armed{
+  filter: brightness(0.85);
+  background: rgba(0,0,0,.22);
+  border-color: rgba(255,215,120,.45);
+  box-shadow: 0 0 0 2px rgba(255,215,120,.18), 0 0 18px rgba(255,215,120,.12);
+}
+
+
 /* ✅ botão de texto com T “forte” */
 .toolbtn-text{
   font-weight: 900;
@@ -199,15 +328,32 @@ button:disabled{
   background: rgba(18,22,30,.88);
 }
 
-.helpToggle{
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.10);
+/* Ctrl+F: helpCorner (desktop) */
+.helpCorner{
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  backdrop-filter: blur(10px);
+  z-index: 0;
+  box-shadow: 0 12px 32px rgba(0,0,0,.45);
+}
+
+/* quando o mesmo #btnHelp vai pro canto no desktop */
+.help-float{
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
   background: rgba(18,22,30,.78);
   backdrop-filter: blur(10px);
   box-shadow: 0 12px 32px rgba(0,0,0,.45);
-  font-weight: 700;
-  cursor: pointer;
+  font-weight: 900;
 }
+
+@media (max-width: 820px){
+  .helpCorner{ display:none; }
+}
+
 
 #panel{
 position:fixed; top:64px; left:12px; z-index:10;
@@ -286,7 +432,7 @@ box-shadow: 0 12px 32px rgba(0,0,0,.45);
 box-sizing: border-box;
 padding: 12px;
 display: none;
-max-height: calc(100vh - 24px);
+max-height: 97%;
 overflow: auto;
 }
 #sidebar header{
@@ -805,7 +951,7 @@ body.metapainel .acc-body{ padding: 0; }
   padding: 6px;
   box-shadow: 0 18px 40px rgba(0,0,0,0.35);
   display: none;
-  z-index: 9999;
+  z-index: 29999;
 }
 
 .dropdown.open .dropdown-menu {
@@ -1312,11 +1458,127 @@ html[data-theme="light"] .radio-option:hover{
   padding: 10px 12px;
 }
 
+.menu-manipulation{
+  display: flex;
+  top: 85px;
+  left: 20px;
+  flex-direction: column;
+  position: absolute;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* =========================
+ *   Dock mini (manipulação) — igual à ToolDock, só que top-left
+ *   Ctrl+F: dockMini
+ *   ========================= */
+.dockMini{
+  position: fixed;
+  top: 80px;        /* abaixo da topbar */
+  left: 12px;
+  display: flex;
+  padding: 8px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.45);
+  z-index: 10;
+}
+
+/* =========================
+ *  Dock acoplada (manipulação dentro da dock de ferramentas)
+ *  Ctrl+F: dockCoupled
+ * ========================= */
+#dockTools.hasManipDock{
+display: flex;
+gap: 10px;
+align-items: center;
+}
+
+/* Quando acoplada, a dock de manipulação PARA de ser "fixed card" */
+#dockTools.hasManipDock #dockManipulation{
+position: static !important;
+top: auto !important;
+left: auto !important;
+
+/* some com o visual duplicado (vira um grupo dentro do dock) */
+padding: 0 !important;
+border: 0 !important;
+box-shadow: none !important;
+backdrop-filter: none !important;
+background: transparent !important;
+
+z-index: auto !important;
+}
+
+/* O grupo de botões continua bonitinho */
+#dockTools.hasManipDock #menuManipulation{
+display: flex;
+gap: 8px;
+}
+
+/* Se a dock de ferramentas estiver EMBAIXO, tudo vira uma fileira */
+#dockTools.dock-bottom.hasManipDock{
+flex-direction: row;
+justify-content: space-between;
+}
+#dockTools.dock-bottom.hasManipDock #menuManipulation{
+flex-direction: row;
+}
+
+/* Se a dock de ferramentas estiver NA LATERAL, empilha em coluna */
+#dockTools.dock-side.hasManipDock{
+flex-direction: column;
+align-items: stretch;
+}
+#dockTools.dock-side.hasManipDock #menuManipulation{
+flex-direction: column;
+}
+
+
+
+/* Ctrl+F: dockMini */
+#dockManipulation.dockMini{
+border-radius: 16px;
+backdrop-filter: blur(10px);
+border: 1px solid rgba(255,255,255,.08);
+box-shadow: 0 12px 32px rgba(0,0,0,.45);
+z-index: 10;
+}
+
+/* Ctrl+F: manipGroup */
+#menuManipulation.manipGroup{
+display: flex;
+flex-direction: column;  /* <- o ponto que tu quer */
+gap: 8px;
+align-items: stretch;
+}
+
+/* opcional: se teus botões ficam “largos demais”, controla aqui */
+#menuManipulation.manipGroup .toolbtn{
+width: 42px;      /* ou auto, se preferir */
+height: 42px;
+}
+
+
+/* A toolgroup dentro dela continua igual, mas fica “bonitinha” sem esticar */
+#dockManipulation .toolgroup{
+padding: 6px;
+}
 
 /* =========================
    MOBILE — dock embaixo + propriedades em card (40% da tela)
    ========================= */
 @media (max-width: 820px){
+  .menu-manipulation.toolgroup{
+    width: auto;
+    flex-direction: column;
+    justify-content: center;
+    top: 80px;
+    left: 12px;
+    width: 40px;
+
+  }
 
   /* 1) Dock fixa embaixo */
   /* Ctrl+F: .toolDock */
@@ -1349,9 +1611,8 @@ html[data-theme="light"] .radio-option:hover{
   }
   .toolDock.dock-side .toolgroup{ flex-direction: row; }
 
-  #ui{
-  width: 90%;
-  }
+  /* Mobile topbar layout handled earlier (Ctrl+F: Mobile layout app nativo) */
+
 
   /* 3) Some com os botões flutuantes (vamos colocar na topbar depois) */
   /* Ctrl+F: .propsToggle e Ctrl+F: .helpToggle */

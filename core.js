@@ -1,5 +1,5 @@
 /* Mobinode - split bundle (part 1/4)
- * v4.4.5
+ * v5.2.2
  * Conteúdo: core + utils + rendering base + tools
  * (Refatoração: arquivo original app_v4.4.4.js dividido em 4 partes para manutenção)
  */
@@ -75,7 +75,7 @@ function isConnectorLine(line) {
 
 
 // =========================
-// Station style helpers (v4.4.5)
+// Station style helpers (v5.1.7)
 // =========================
 function stationRadiusForNode(n) {
     // UI trabalha com “diâmetro”. Aqui sempre devolvemos o raio em px.
@@ -200,6 +200,8 @@ function makeStationShapeEl(shape, cx, cy, r, wMul = 1, hMul = 1) {
  tool: "network", // neutral | network | line | connections | pan | select | text | curves
  // v4.9.2: gesto touch-friendly — alterna entre mover estação e "arrastar para criar/conectar"
  nodeDragMode: "move", // move | drag
+ // Modos por ferramenta (v5.1.5): cada tool tem seu próprio "mover" vs "criar/conectar"
+ toolModes: { network: "move", line: "move", connections: "move" },
  view: { x: 0, y: 0, z: 1 },
 
  // shapes tool
@@ -318,9 +320,9 @@ function makeStationShapeEl(shape, cx, cy, r, wMul = 1, hMul = 1) {
     // =========================
     // DOM elements (optional-friendly)
     // =========================
-    const dom = {
-        // svg/world
-        viewport: $("viewport"),
+ const dom = {
+ // svg/world
+ viewport: $("viewport"),
  world: $("world"),
  gridG: $("grid"),
  edgesG: $("edges"),
@@ -331,9 +333,11 @@ function makeStationShapeEl(shape, cx, cy, r, wMul = 1, hMul = 1) {
 
  // toolbar
  dockTools: $("dockTools"),
- toolPointer: null, // botão 🖱️ (modo neutro)
+ dockManipulation: $("dockManipulation"),
+ menuManipulation: $("menuManipulation"),
+ toolPointer: $("toolPointer"), // botão 🖱️ (modo neutro)
  toolPan: $("toolPan"),
-  btnDragMode: $("btnDragMode"),
+ btnDragMode: $("btnDragMode"),
  toolStation: $("toolStation"),
  toolStationBadgeCircle: document.querySelector("#toolStation .tool-linebadge-circle"),
  toolStationBadgeText: document.querySelector("#toolStation .tool-linebadge-text"),
@@ -347,6 +351,7 @@ function makeStationShapeEl(shape, cx, cy, r, wMul = 1, hMul = 1) {
  toolRotate: $("toolRotate"),
 
 
+
  btnUndo: $("btnUndo"),
  btnRedo: $("btnRedo"),
 
@@ -355,6 +360,11 @@ function makeStationShapeEl(shape, cx, cy, r, wMul = 1, hMul = 1) {
 
  // arquivo + JSON modal
  fileDropdown: $("fileDropdown"),
+ fileMenu: $("fileMenu"),
+ importMenu: $("importMenu"),
+ exportMenu: $("exportMenu"),
+ settingsMenu: $("settingsMenu"),
+ helpMenu: $("helpMenu"),
  btnFile: $("btnFile"),
  menuNewProject: $("menuNewProject"),
  menuImport: $("menuImport"),
@@ -438,7 +448,7 @@ function makeStationShapeEl(shape, cx, cy, r, wMul = 1, hMul = 1) {
 
  btnDeleteStation: $("btnDeleteStation"),
 
-	 // station style (v4.4.5)
+	 // station style (v5.1.7)
 	 stationStyleShape: $("stationStyleShape"),
 	 stationStyleSizeRange: $("stationStyleSizeRange"),
 	 stationStyleSize: $("stationStyleSize"),
@@ -654,6 +664,73 @@ function makeStationShapeEl(shape, cx, cy, r, wMul = 1, hMul = 1) {
     };
 
     // =========================
+    // Dock coupling (manipulação <-> ferramentas)
+    // Ctrl+F: manipHome
+    // =========================
+    const manipHome = {
+        parent: null,
+        next: null,
+    };
+
+    function rememberManipHome(){
+        if (!dom.dockManipulation) return;
+        if (manipHome.parent) return; // já lembrado
+        manipHome.parent = dom.dockManipulation.parentElement;
+        manipHome.next = dom.dockManipulation.nextElementSibling;
+    }
+
+    function coupleManipToTools(){
+        if (!dom.dockManipulation || !dom.dockTools) return;
+
+        rememberManipHome();
+
+        // ativa modo acoplado
+        dom.dockTools.classList.add("hasManipDock");
+
+        // remove classe de dock flutuante pra não brigar com o CSS acoplado
+        dom.dockManipulation.classList.remove("dockMini");
+
+        // move de verdade no DOM (acopla!)
+        dom.dockTools.insertBefore(dom.dockManipulation, dom.dockTools.firstChild);
+    }
+
+    function decoupleManipToHome(){
+        if (!dom.dockManipulation) return;
+
+        // desativa modo acoplado
+        if (dom.dockTools) dom.dockTools.classList.remove("hasManipDock");
+
+        // volta a ser dock flutuante
+        dom.dockManipulation.classList.add("dockMini");
+
+        // volta pro lugar original no DOM
+        if (manipHome.parent){
+            if (manipHome.next && manipHome.next.parentElement === manipHome.parent){
+                manipHome.parent.insertBefore(dom.dockManipulation, manipHome.next);
+            } else {
+                manipHome.parent.appendChild(dom.dockManipulation);
+            }
+        }
+    }
+
+    function applyDockCoupling(){
+        // regra: se o usuário está mudando "posição da dock de ferramentas", a manipulação acompanha (acopla)
+        // Você pode refinar depois (ex.: só acoplar no desktop, etc.)
+        const pos = state.dockPos || "side";
+
+        // no mobile você já tem a toolDock embaixo; manter acoplado fica bem natural
+        // mas se você quiser “manipulação sempre solta no mobile”, é aqui que você mudaria.
+        // Só acopla quando a dock de ferramentas estiver na LATERAL
+        if (pos === "side"){
+            coupleManipToTools();
+        } else {
+            decoupleManipToHome();
+        }
+
+    }
+
+
+    // =========================
     // Tema (v4.4.1)
     // =========================
     const THEME_KEY = "mobinode.theme";
@@ -723,6 +800,7 @@ function applyDockPosition() {
     const pos = normalizeDockPos(state.dockPos);
     dom.dockTools.classList.toggle("dock-side", pos === "side");
     dom.dockTools.classList.toggle("dock-bottom", pos === "bottom");
+    applyDockCoupling();
 }
 
 function syncDockPositionRadios() {
@@ -750,6 +828,67 @@ function initDockPosition() {
     applyDockPosition();
     syncDockPositionRadios();
 }
+
+// =========================
+// Mobile: travar dock no fundo + esconder opção (v5.3.x)
+// Ctrl+F: enforceMobileDockRules
+// =========================
+
+let __desktopDockPosRemember = null;
+
+function isMobileLayoutCore() {
+    try {
+        return !!(window.matchMedia && window.matchMedia("(max-width: 820px)").matches);
+    } catch {
+        return false;
+    }
+}
+
+// Esconde/mostra a seção "Posição da dock" dentro do modal Configurações
+function updateDockPositionSettingVisibility() {
+    // Ctrl+F: dockPosSide (no index.html)
+    const side = dom.dockPosSide;
+    if (!side) return;
+
+    const field = side.closest(".field");
+    if (!field) return;
+
+    const mobile = isMobileLayoutCore();
+    field.style.display = mobile ? "none" : "";
+
+    // Se quiser ser ainda mais seguro, desabilita também os radios no mobile:
+    if (dom.dockPosSide) dom.dockPosSide.disabled = mobile;
+    if (dom.dockPosBottom) dom.dockPosBottom.disabled = mobile;
+}
+
+// Força dock = fundo no mobile, e restaura no desktop
+function enforceMobileDockRules() {
+    const mobile = isMobileLayoutCore();
+
+    if (mobile) {
+        // lembra a preferência de desktop (uma vez)
+        if (__desktopDockPosRemember == null) {
+            __desktopDockPosRemember = normalizeDockPos(state.dockPos);
+        }
+
+        // força FUNDO sem sobrescrever a preferência salva do usuário
+        // (persist=false pra não gravar no localStorage)
+        setDockPosition("bottom", false);
+    } else {
+        // voltando ao desktop: restaura o que o usuário tinha antes
+        if (__desktopDockPosRemember != null) {
+            setDockPosition(__desktopDockPosRemember, false);
+            __desktopDockPosRemember = null;
+        }
+    }
+
+    updateDockPositionSettingVisibility();
+}
+
+// expõe pra UI/boot chamarem em resize e ao abrir Configurações
+window.enforceMobileDockRules = enforceMobileDockRules;
+window.updateDockPositionSettingVisibility = updateDockPositionSettingVisibility;
+
 
     // UI helper: mostra/oculta o dropdown de "orientação padrão" da linha
     function setLineDefaultOrientationUI() {
@@ -909,6 +1048,64 @@ function setSectionState(sectionEl, emptyEl, contentEl, enabled) {
  y: (clientY - r.top - state.view.y) / state.view.z,
         };
     }
+
+    // =========================
+    // Pinch to Zoom (touch)
+    // Ctrl+F: pinchStartDist
+    // =========================
+    let pinchStartDist = 0;
+    let pinchStartZoom = 1;
+    let pinchStartMid = null;
+
+    function touchDistance(t1, t2) {
+        const dx = t2.clientX - t1.clientX;
+        const dy = t2.clientY - t1.clientY;
+        return Math.hypot(dx, dy);
+    }
+
+    function touchMidpoint(t1, t2) {
+        return {
+            x: (t1.clientX + t2.clientX) / 2,
+            y: (t1.clientY + t2.clientY) / 2
+        };
+    }
+
+    dom.viewport.addEventListener("touchstart", (e) => {
+        if (e.touches.length === 2) {
+            pinchStartDist = touchDistance(e.touches[0], e.touches[1]);
+            pinchStartZoom = state.view.z;
+            pinchStartMid = touchMidpoint(e.touches[0], e.touches[1]);
+        }
+    }, { passive: false });
+
+    dom.viewport.addEventListener("touchmove", (e) => {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+
+            const newDist = touchDistance(e.touches[0], e.touches[1]);
+            const scale = newDist / pinchStartDist;
+
+            let newZoom = clamp(pinchStartZoom * scale, CFG.MIN_Z, CFG.MAX_Z);
+
+            // mantém o ponto central fixo
+            const mid = touchMidpoint(e.touches[0], e.touches[1]);
+            const worldBefore = screenToWorld(pinchStartMid.x, pinchStartMid.y);
+
+            state.view.z = newZoom;
+
+            const worldAfter = screenToWorld(mid.x, mid.y);
+
+            state.view.x += (worldAfter.x - worldBefore.x) * state.view.z;
+            state.view.y += (worldAfter.y - worldBefore.y) * state.view.z;
+
+            applyView();
+        }
+    }, { passive: false });
+
+    dom.viewport.addEventListener("touchend", () => {
+        pinchStartDist = 0;
+    });
+
 
     function applyView() {
         if (!dom.world) return;
@@ -2904,7 +3101,7 @@ function endGroupedEdit(key) {
  labelOffset: { dx: 0, dy: 0 },
 
 
-	 // estilo visual da estação (v4.4.5)
+	 // estilo visual da estação (v5.1.7)
 	 stationStyle: baseStyle,
 
  type: "normal",
@@ -3254,6 +3451,12 @@ function nearestNode(worldPt, radius = CFG.CONNECT_SNAP_RADIUS) {
     function setTool(tool) {
         state.tool = tool;
 
+        // v5.1.5: ao trocar de ferramenta, sincroniza o modo (mover vs criar/conectar) daquela tool
+        if (state.toolModes && (tool === "network" || tool === "line" || tool === "connections")) {
+            const m2 = state.toolModes[tool] || "move";
+            state.nodeDragMode = (m2 === "drag") ? "drag" : "move";
+        }
+
         // Em builds modulares, part3 (interactions) pode ainda não ter carregado
         // quando o setTool roda no boot. Então só chamamos se existir.
         stopPan();
@@ -3305,19 +3508,31 @@ function nearestNode(worldPt, radius = CFG.CONNECT_SNAP_RADIUS) {
         try { if (typeof updateDragModeButtonUI === "function") updateDragModeButtonUI(); } catch {}
     }
 
+    
     // =========================
     // Drag mode (mover vs criar/conectar)
     // =========================
     function updateDragModeButtonUI() {
-        if (!dom.btnDragMode) return;
-        const enabled = (state.tool === "network" || state.tool === "line");
-        dom.btnDragMode.disabled = !enabled;
+        const enabled = (state.tool === "network" || state.tool === "line" || state.tool === "connections");
 
-        const isDrag = (state.nodeDragMode === "drag");
-        dom.btnDragMode.textContent = isDrag ? "👊" : "🤚";
-        dom.btnDragMode.classList.toggle("active", isDrag);
-        dom.btnDragMode.setAttribute("aria-pressed", isDrag ? "true" : "false");
-        dom.btnDragMode.title = isDrag
-            ? "Modo: criar/conectar (arraste de uma estação)"
-            : "Modo: mover estação (arraste)";
+        // Modo atual da ferramenta ativa (fallback: state.nodeDragMode)
+        const currentMode = (state.toolModes && state.toolModes[state.tool]) ? state.toolModes[state.tool] : state.nodeDragMode;
+        const isDrag = (currentMode === "drag");
+
+        // (Legado) Se o botão 🤚/👊 existir, atualiza ele — mas ele pode não existir mais.
+        if (dom.btnDragMode) {
+            dom.btnDragMode.disabled = !enabled;
+            dom.btnDragMode.textContent = isDrag ? "👊" : "🤚";
+            dom.btnDragMode.classList.toggle("active", isDrag);
+            dom.btnDragMode.setAttribute("aria-pressed", isDrag ? "true" : "false");
+            dom.btnDragMode.title = isDrag ? "Modo: criar/conectar" : "Modo: mover";
+        }
+
+        // Sempre refletir o estado "armed" nos botões (mesmo sem btnDragMode).
+        // Ctrl+F: classList.toggle("armed"
+        try {
+            if (dom.toolStation) dom.toolStation.classList.toggle("armed", (state.tool === "network" && enabled && isDrag));
+            if (dom.toolLine) dom.toolLine.classList.toggle("armed", (state.tool === "line" && enabled && isDrag));
+            if (dom.toolConnections) dom.toolConnections.classList.toggle("armed", (state.tool === "connections" && enabled && isDrag));
+        } catch {}
     }

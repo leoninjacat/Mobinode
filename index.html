@@ -4,41 +4,75 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="./app.css"/>
-  <title>Mobinode 5.1.2</title>
+  <title>Mobinode v5.3.0</title>
 </head>
 
 <body>
-  <!-- Barra superior: só título + ações de arquivo + ajuda -->
+  <!-- Barra superior: título + menus estilo app (desktop) / hambúrguer (mobile) + ajuda -->
   <div id="ui" role="banner" aria-label="Barra superior">
     <div class="topbar-left">
       <strong class="appname">Mobinode</strong>
-      <span class="sep">|</span>
-    </div>
-        <div class="topbar-right" role="group" aria-label="Arquivo">
-          <div class="dropdown" id="fileDropdown" aria-label="Arquivo">
-            <button id="btnFile" title="Arquivo">☰</button>
-            <div class="dropdown-menu" role="menu" aria-label="Menu Arquivo">
-              <button class="dropdown-item" id="menuNewProject" type="button">Novo…</button>
-              <button class="dropdown-item" id="menuImport" type="button">Importar JSON…</button>
-              <button class="dropdown-item" id="menuExport" type="button">Exportar JSON…</button>
-              <button class="dropdown-item" id="menuExportPNG" type="button">Exportar PNG…</button>
-              <button class="dropdown-item" id="menuExportPDF" type="button">Exportar PDF…</button>
-              <button class="dropdown-item" id="menuSaveCache" type="button">Salvar em cache</button>
-              <div class="dropdown-sep" role="separator"></div>
-              <button class="dropdown-item danger" id="menuClear" type="button">Limpar…</button>
-              <div class="dropdown-sep" role="separator"></div>
-              <button class="dropdown-item" id="btnConfig" title="Configurações">Configurações</button>
-              <button class="dropdown-item" id="btnAbout" title="Sobre">Sobre</button>
-            </div>
-          </div>
-            <button aria-pressed="false" title="Seta">➚</button>
-            <button id="toolPan" class="toolbtn" aria-pressed="false" title="Pan">✥</button>
-            <button id="toolSelect" class="toolbtn" aria-pressed="false" title="Seleção retangular">⛶</button>
-            <button id="btnUndo" title="Desfazer (Ctrl+Z)">↺</button>
-            <button id="btnRedo" title="Refazer (Ctrl+Y)">↻</button>
-            <button id="btnHelp" title="Ajuda" >?</button>
+      <span class="sep" aria-hidden="true">|</span>
+
+      <!-- Menus (desktop: barra estilo app; mobile: hambúrguer com tudo dentro) -->
+      <div class="dropdown" id="fileDropdown" aria-label="Arquivo">
+        <!-- Mobile-only trigger (hambúrguer) -->
+        <button id="btnMobileMenu" class="menubtn" title="Menu" aria-label="Menu">☰</button>
+
+        <!-- Desktop trigger (Arquivo) -->
+        <button id="btnFile" class="menubtn" title="Arquivo">
+          <span class="btnFileIcon" aria-hidden="true">☰</span>
+          <span class="btnFileText">Arquivo</span>
+        </button>
+        <div class="dropdown-menu" id="fileMenu" role="menu" aria-label="Menu Arquivo">
+          <button class="dropdown-item" id="menuNewProject" type="button">Novo…</button>
+          <button class="dropdown-item" id="menuImport" type="button">Importar JSON…</button>
+          <button class="dropdown-item" id="menuExport" type="button">Exportar JSON…</button>
+          <button class="dropdown-item" id="menuExportPNG" type="button">Exportar PNG…</button>
+          <button class="dropdown-item" id="menuExportPDF" type="button">Exportar PDF…</button>
+          <button class="dropdown-item" id="menuSaveCache" type="button">Salvar em cache</button>
+          <div class="dropdown-sep" role="separator"></div>
+          <button class="dropdown-item danger" id="menuClear" type="button">Limpar…</button>
+          <div class="dropdown-sep" role="separator"></div>
+          <button class="dropdown-item" id="btnConfig" title="Configurações">Configurações</button>
+          <button class="dropdown-item" id="btnAbout" title="Sobre">Sobre</button>
         </div>
       </div>
+
+      <!-- Menus desktop (recebem os itens via JS) -->
+      <div class="dropdown desktopMenus" id="importDropdown" aria-label="Importar">
+        <button id="btnImportTop" class="menubtn" title="Importar">Importar</button>
+        <div class="dropdown-menu" id="importMenu" role="menu" aria-label="Menu Importar"></div>
+      </div>
+
+      <div class="dropdown desktopMenus" id="exportDropdown" aria-label="Exportar">
+        <button id="btnExportTop" class="menubtn" title="Exportar">Exportar</button>
+        <div class="dropdown-menu" id="exportMenu" role="menu" aria-label="Menu Exportar"></div>
+      </div>
+
+      <div class="dropdown desktopMenus" id="settingsDropdown" aria-label="Configurações e Sobre">
+        <button id="btnSettingsMain" class="menubtn" title="Configurações e Sobre">Configurações e mais</button>
+        <div class="dropdown-menu" id="settingsMenu" role="menu" aria-label="Menu Configurações e Sobre"></div>
+      </div>
+
+    </div>
+
+    <div id="topbarRight" class="topbar-right" role="group" aria-label="Ajuda">
+      <button id="btnHelp" title="Ajuda">?</button>
+    </div>
+  </div>
+
+      <!-- Dock de manipulação (top-left, abaixo da topbar) -->
+<div id="dockManipulation" class="dockMini" role="group" aria-label="Dock de manipulação">
+  <div id="menuManipulation" class="manipGroup" role="toolbar" aria-label="Manipulação">
+    <button id="toolPointer" class="toolbtn" aria-pressed="false" title="Seta">➚</button>
+    <button id="toolSelect" class="toolbtn" aria-pressed="false" title="Seleção retangular">⛶</button>
+    <button id="toolPan" class="toolbtn" aria-pressed="false" title="Pan">✥</button>
+    <button id="btnUndo" class="toolbtn" title="Desfazer (Ctrl+Z)">↺</button>
+    <button id="btnRedo" class="toolbtn" title="Refazer (Ctrl+Y)">↻</button>
+  </div>
+</div>
+
 
   <button id="btnShowSidebar" class="propsToggle" title="Abrir painel de propriedades" style="display:none;">
     ✏ Propriedades
@@ -55,12 +89,10 @@
             <span class="tool-linebadge-text">1</span>
           </span>
         </span>
-      </button>
-      <button id="btnDragMode" class="toolbtn" aria-pressed="false" title="Modo: mover estação (arraste)">🤚</button>
-      <button id="toolLine" class="toolbtn" aria-pressed="false" title="Linhas">🛤️</button>
+      </button>      <button id="toolLine" class="toolbtn" aria-pressed="false" title="Linhas">🛤️</button>
       <button id="toolConnections" class="toolbtn" aria-pressed="false" title="Conexões">⫘</button>
       <button id="toolCurves" class="toolbtn" aria-pressed="false" title="Curvas (editar dobras)">╮</button>
-      <button id="toolText" class="toolbtn toolbtn-text" aria-pressed="false" title="Sinalização">📐</button>
+      <button id="toolText" class="toolbtn toolbtn-text" aria-pressed="false" title="Sinalização">T</button>
       <button id="toolShapes" class="toolbtn" aria-pressed="false" title="Formas">⚪</button>
     </div>
   </div>
@@ -73,11 +105,11 @@
     </div>
     <div id="helpContent" class="helpBody">
       <ul>
-      <li>⛶ pan (mover o mapa)</li>
+      <li>⛶ Pan: botão do meio / trackpad</li>
       <li>⚪ cria estação</li>
       <li>📐 cria sinalização</li>
-      <li>🤚 modo mover: arrasta estações existentes</li>
-      <li>👊 modo drag: arrasta de uma estação para criar/conectar</li>
+      <li>Clique 1 na ferramenta: mover</li>
+      <li>Clique 2 na ferramenta (escurece): criar/conectar</li>
       <li>╮ edita dobras do traçado</li>
       <li>▭ seleciona/move</li>
       <li>Scroll: zoom</li>
@@ -91,7 +123,7 @@
   <aside id="sidebar">
     <header>
       <div>
-        <h3 id="sidebarTitle">Mobinode v5.1.2</h3>
+        <h3 id="sidebarTitle">Mobinode v5.3.0_dev</h3>
         <div id="sidebarMeta" class="meta"></div>
       </div>
       <button id="btnCloseSidebar" class="iconbtn" title="Fechar">×</button>
@@ -487,7 +519,10 @@
         <summary>Texto e sinalização</summary>
         <div class="acc-body">
           <div id="textEmpty" class="empty-note">Abra esta seção para escolher sinalizações ou criar texto livre. Selecione um elemento no mapa para ajustar ou apagar.</div>
-
+          <div class="row">
+                <button id="btnDuplicateText" class="btn btn-ghost">Duplicar</button>
+                <button id="btnDeleteText">Excluir elemento</button>
+              </div>
           <div class="section-title" style="margin-top:16px;">Texto livre</div>
             <div class="field">
               <label for="textContent">Conteúdo</label>
@@ -539,10 +574,6 @@
                 Criar como <b>identificação + nome</b>
               </label>
               <div class="smallnote">Quando ativado, ao escolher um nome de linha acima você cria (ou transforma) um elemento com o círculo + o nome juntos.</div>
-            </div>
-            <div class="row">
-              <button id="btnDuplicateText" class="btn btn-ghost">Duplicar</button>
-              <button id="btnDeleteText">Excluir elemento</button>
             </div>
           </div>
         </div>
@@ -848,15 +879,16 @@
         </div>
       </div>
 
-<div class="section-title">Aplicativo</div>
-<div class="field">
-  <label>Posição da dock de ferramentas</label>
-  <div class="radio-group" role="radiogroup" aria-label="Posição da dock de ferramentas">
-    <label class="radio-option"><input id="dockPosSide" type="radio" name="dockPos" value="side"> Lateral</label>
-    <label class="radio-option"><input id="dockPosBottom" type="radio" name="dockPos" value="bottom"> Fundo</label>
-  </div>
-</div>
-</div>
+      <div class="section-title">Aplicativo</div>
+        <div class="field">
+          <label>Posição da dock de ferramentas</label>
+          <div class="radio-group" role="radiogroup" aria-label="Posição da dock de ferramentas">
+            <label class="radio-option"><input id="dockPosSide" type="radio" name="dockPos" value="side"> Lateral</label>
+            <label class="radio-option"><input id="dockPosBottom" type="radio" name="dockPos" value="bottom"> Fundo</label>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
@@ -886,7 +918,7 @@
         <main class="about-details">
           <section class="about-pane active" data-about-pane="app">
             <h2>Mobinode</h2>
-            <h4>versão 5.1.2</h4>
+            <h4>versão 5.3.0</h4>
             <p>
               Mobinode é um editor visual para criar mapas esquemáticos de transporte (linhas, estações,
               integrações e textos) direto no navegador — rápido, leve e focado em clareza.
@@ -1221,7 +1253,7 @@
       <path id="ghost" class="ghost" d="" style="display:none;"></path>
     </g>
   </svg>
-
+<div id="helpCorner" class="helpCorner" aria-label="Ajuda rápida"></div>
 
 
 <script src="./core.js"></script>

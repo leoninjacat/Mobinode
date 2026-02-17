@@ -1,5 +1,5 @@
 /* Mobinode - split bundle (part 2/4)
- * v4.4.5
+ * v5.2.2
  * Conteúdo: UI (sidebar/panels, modais, accordion, lógica do painel de linhas)
  */
 
@@ -58,6 +58,28 @@ function showToast(message, opts = {}) {
         }
     }
 
+    // Move o MESMO botão de ajuda (#btnHelp) entre TopBar (mobile) e canto inferior direito (desktop).
+    function placeHelpButtonByLayout() {
+        const btn = dom.btnHelp;
+        if (!btn) return;
+
+        const mobile = isMobileLayout();
+        const topbar = document.getElementById("topbarRight");
+        const corner = document.getElementById("helpCorner");
+
+        if (mobile) {
+            if (topbar && btn.parentNode !== topbar) topbar.appendChild(btn);
+            btn.classList.remove("help-float");
+        } else {
+            if (corner && btn.parentNode !== corner) corner.appendChild(btn);
+            btn.classList.add("help-float");
+        }
+    }
+
+    window.placeHelpButtonByLayout = placeHelpButtonByLayout;
+
+
+
     function showHelpPanel(on) {
         if (!dom.helpPanel) return;
         dom.helpPanel.style.display = on ? "block" : "none";
@@ -87,28 +109,27 @@ function showToast(message, opts = {}) {
             ],
         },
 
-        pan: {
-            title: "Pan (🖐️)",
-            bullets: [
-                "Clique + arrastar: mover o mapa",
-                "Scroll: zoom",
-            ],
-        },
+        // Pan não é mais uma ferramenta na dock (sem botão). Use o botão do meio/trackpad para mover.
 
         network: {
             title: "Estação (⚪)",
             bullets: [
-                "Duplo clique: cria uma estação",
-                "ALT + clique + arrastar: cria nova estação ligada à anterior",
-                "Ctrl + clique em múltiplas estações: seleção múltipla",
+                "Clique 1: mover estações",
+                "Clique 2 (botão escurece): criar/conectar",
+                "Armado: clique no vazio cria estação",
+                "Armado: arraste de estação → vazio cria estação ligada",
+                "Armado: arraste de estação → estação conecta",
+                "Ctrl + clique: seleção múltipla",
             ],
         },
 
         line: {
             title: "Linhas (🛤️)",
             bullets: [
-                "Arraste de uma estação pra outra: cria conexão",
-                "ALT: encadear conexões (quando aplicável)",
+                "Clique 1: mover/selecionar",
+                "Clique 2 (botão escurece): criar novas linhas/ligar",
+                "Armado: arraste no vazio cria um novo trecho de linha",
+                "Armado: arraste estação → estação cria ligação",
                 "Clique na linha: seleciona a linha",
             ],
         },
@@ -116,8 +137,10 @@ function showToast(message, opts = {}) {
         connections: {
             title: "Conexões (🔗)",
             bullets: [
-                "Segure Shift e arraste de uma estação a outra para conectá-las (traçado branco, pontos cinza).",
-                "Você pode personalizar como a linha de conexão se apresenta no painel de propriedades.",
+                "Clique 1: mover/selecionar",
+                "Clique 2 (botão escurece): conectar estações",
+                "Armado: arraste estação → estação cria conexão",
+                "Painel: personalize a linha de conexão",
             ],
         },
 
@@ -194,7 +217,11 @@ function showToast(message, opts = {}) {
         if (open) {
             syncThemeRadios();
             try { syncDockPositionRadios(); } catch {}
+
+            // Ctrl+F: enforceMobileDockRules
+            try { window.enforceMobileDockRules && window.enforceMobileDockRules(); } catch {}
         }
+
     }
 
     let aboutTabsBound = false;
@@ -368,7 +395,7 @@ function showToast(message, opts = {}) {
         const n = findNode(nodeId);
         if (!n || !dom.stationPanel) return;
 
-		// v4.4.5: garante estrutura de estilo para JSONs antigos
+		// v5.1.7: garante estrutura de estilo para JSONs antigos
 		if (!n.stationStyle) {
 			n.stationStyle = { shape: "circle", size: CFG.STATION_R * 2, wMul: 1, hMul: 1, fill: "#ffffff", stroke: "", strokeWidth: 3 };
 		}
@@ -462,11 +489,16 @@ function showToast(message, opts = {}) {
         if (!sidebarOpen) return;
 
         if (!state.isAltChaining && pendingStationFocusId === n.id && dom.stationName) {
-            const ae = document.activeElement;
-            const userIsTyping = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.isContentEditable);
-            if (!userIsTyping) {
-                dom.stationName.focus();
-                dom.stationName.select();
+            // Modo mobile: não roubar foco (evita teclado abrindo e a tela "pulando").
+            // Ctrl+F: pendingStationFocusId === n.id
+            const mobile = isMobileLayout();
+            if (!mobile) {
+                const ae = document.activeElement;
+                const userIsTyping = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.isContentEditable);
+                if (!userIsTyping) {
+                    dom.stationName.focus();
+                    dom.stationName.select();
+                }
             }
             pendingStationFocusId = null;
         }
@@ -645,36 +677,61 @@ if (dom.textOutline) {
     }
 
     // =========================
-    // Accordion behavior (apenas 1 aberto)
+    // Accordion behavior (mobile: independente | desktop: apenas 1 aberto)
     // =========================
     let accordionDetails = null;
+    let accordionExclusiveBound = false;
     let lastSelectionSig = null;
 
-    function initAccordionExclusive() {
+    // Ctrl+F: ensureAccordionDetails
+    function ensureAccordionDetails() {
         const acc = document.querySelector(".accordion");
-        if (!acc) return;
+        if (!acc) return null;
         accordionDetails = Array.from(acc.querySelectorAll("details"));
-        accordionDetails.forEach((d) => {
+        return accordionDetails;
+    }
+
+    // Ctrl+F: initAccordionExclusive
+    function initAccordionExclusive() {
+        // No mobile, os flyouts são independentes (não fecha os outros automaticamente)
+        if (isMobileLayout()) return;
+
+        const list = accordionDetails || ensureAccordionDetails();
+        if (!list || accordionExclusiveBound) return;
+
+        accordionExclusiveBound = true;
+        list.forEach((d) => {
             d.addEventListener("toggle", () => {
                 if (!d.open) return;
-                accordionDetails.forEach((other) => {
+                list.forEach((other) => {
                     if (other !== d) other.open = false;
                 });
             });
         });
     }
 
+    // Ctrl+F: openAccordion
     function openAccordion(detailsEl) {
         if (!detailsEl) return;
-        if (!accordionDetails) initAccordionExclusive();
-        if (!accordionDetails) return;
-        accordionDetails.forEach((d) => {
-            if (d !== detailsEl) d.open = false;
-        });
-            detailsEl.open = true;
+
+        const list = accordionDetails || ensureAccordionDetails();
+        if (!list) return;
+
+        if (!isMobileLayout()) {
+            initAccordionExclusive();
+            list.forEach((d) => {
+                if (d !== detailsEl) d.open = false;
+            });
+        }
+        detailsEl.open = true;
     }
 
-
+    // Ctrl+F: closeAllAccordions
+    function closeAllAccordions() {
+        const list = accordionDetails || ensureAccordionDetails();
+        if (!list) return;
+        list.forEach((d) => { d.open = false; });
+    }
 
 function setMetaPanelActive(which){
     // which: "line" | "station" | "connections" | "text" | "multi"
@@ -849,7 +906,9 @@ if (state.propsMode === "metapanel") {
         }
         if (state.propsMode !== "metapanel") {
 
-        if (!lock) {
+        // No mobile, NÃO auto-abre flyout ao selecionar — só abre quando clicar no botão da ferramenta.
+        // Ctrl+F: No mobile, NÃO auto-abre flyout
+        if (!isMobileLayout() && !lock) {
             const sig = `${[...state.selectedNodeIds].sort().join(",")}|e:${state.selectedEdgeId || ""}|t:${state.selectedTextId || ""}|tool:${state.tool}`;
             if (sig !== lastSelectionSig) {
                 if (hasShape) openAccordion(dom.accShapes);

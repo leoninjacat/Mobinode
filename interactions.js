@@ -1,5 +1,5 @@
 /* Mobinode - split bundle (part 3/4)
- * v4.4.5
+ * v5.2.2
  * Conteúdo: Interações (pan/zoom, drags, seleção, eventos de viewport/teclado)
  */
 
@@ -352,64 +352,68 @@ let connectionDraft = []; // guarda a ordem dos cliques (até 3)
             return;
         }
 
+        // Ctrl+F: if (state.tool === "connections")
         if (state.tool === "connections") {
-            // Garante que existe a "linha-conector" exclusiva
-            // (não precisa mexer na linha ativa do mapa)
-            const connectorLineId = ensureConnectorLine();
+            ensureConnectorLine();
 
-            // Gesto oficial do modo Conexões: SHIFT + arrastar de uma estação pra outra
-            // (usa a linha ativa como "linha-conector"; não mexe nas linhas do mapa)
+            // seleção visual (mantém simples)
+            if (!state.selectedNodeIds.has(nodeId) || state.selectedNodeIds.size !== 1) {
+                setSingleSelectionNode(nodeId);
+            }
+            renderAll();
+            refreshSidebar();
+
+            // ✅ SHIFT = conectar rápido (só entre existentes)
             if (ev.shiftKey) {
-                // garante seleção visual (pra UI ficar viva)
-                if (!state.selectedNodeIds.has(nodeId) || state.selectedNodeIds.size !== 1) {
-                    setSingleSelectionNode(nodeId);
-                }
-                renderAll();
-                refreshSidebar();
-
                 startLinkDrag(ev, nodeId, "connect");
                 return;
             }
 
-            // No modo Conexões, clique simples NÃO cria ligação.
-            // Só seleciona a estação (pra UI/propriedades) e limpa qualquer rascunho legado.
-            try { ev.preventDefault(); } catch {}
-            connectionDraft = [];
-
-            if (!state.selectedNodeIds.has(nodeId) || state.selectedNodeIds.size !== 1) {
-                setSingleSelectionNode(nodeId);
+            // ✅ ALT = criar estação + conectar (no modo conexões também)
+            if (ev.altKey) {
+                startLinkDrag(ev, nodeId, "chain");
+                return;
             }
 
-            renderAll();
-            refreshSidebar();
+            // Toggle “armado”
+            if (state.nodeDragMode === "drag") {
+                startLinkDrag(ev, nodeId, "connect");
+                return;
+            }
+
+            // padrão: mover estação
+            pushHistory();
+            startNodeDrag(ev, nodeId);
             return;
         }
 
 
 
 
+        // Ctrl+F: if (state.tool === "network" || state.tool === "line")
         if (state.tool === "network" || state.tool === "line") {
-            // seleção
-            if (ev.shiftKey && state.nodeDragMode === "move") {
-                // no modo mover, SHIFT continua sendo "somar na seleção"
-                toggleSelectionNode(nodeId);
+            // seleção (mantém como você já tem)
+            if (!state.selectedNodeIds.has(nodeId)) {
+                setSingleSelectionNode(nodeId);
+                if (!state.isAltChaining) pendingStationFocusId = nodeId;
                 renderAll();
                 refreshSidebar();
-            } else {
-                if (!state.selectedNodeIds.has(nodeId)) {
-                    setSingleSelectionNode(nodeId);
-                    if (!state.isAltChaining) pendingStationFocusId = nodeId;
-                    renderAll();
-                    refreshSidebar();
-                }
             }
 
-            // gesto touch-friendly (v4.9.2): modo 👊 cria/conecta sem precisar ALT/CTRL
+            // ✅ Atalhos coexistindo com o toggle:
+            // SHIFT = conectar rápido (sem criar estação)
             if (ev.shiftKey) {
-                // SHIFT mantém o "conectar rápido" (sem cadeia)
                 startLinkDrag(ev, nodeId, "connect");
                 return;
             }
+
+            // ALT = criar/encadear (cria estação se soltar no vazio)
+            if (ev.altKey) {
+                startLinkDrag(ev, nodeId, "chain");
+                return;
+            }
+
+            // Toggle (2º clique) continua funcionando normalmente
             if (state.nodeDragMode === "drag") {
                 startLinkDrag(ev, nodeId, "chain");
                 return;
@@ -420,6 +424,7 @@ let connectionDraft = []; // guarda a ordem dos cliques (até 3)
             startNodeDrag(ev, nodeId);
             return;
         }
+
 
         if (state.tool === "text") {
             setSingleSelectionNode(nodeId);
@@ -868,14 +873,29 @@ let connectionDraft = []; // guarda a ordem dos cliques (até 3)
 
 
         if (state.tool === "network" || state.tool === "line") {
-            // v5.0.0: no modo Linhas, arrastar no vazio cria uma nova linha (sem ALT).
-            if (state.tool === "line") {
+            // v5.0.0: no modo Linhas (ARMADO), arrastar no vazio cria uma nova linha.
+            if (state.tool === "line" && state.nodeDragMode === "drag") {
                 startNewLineDrag(ev);
-                // Se iniciou, não vamos cair no "só deseleciona".
                 if (isDraggingNewLine) return;
             }
 
-            // Clique simples no vazio: só deseleciona (criação de estação é no duplo clique).
+            // v5.2.2: no modo Estação (ARMADO), clique simples no vazio cria estação.
+            if (state.tool === "network" && state.nodeDragMode === "drag") {
+                pushHistory();
+                const n = addNode(w.x, w.y);
+
+                clearSelection();
+                state.selectedNodeIds.add(n.id);
+                state.selectedEdgeId = null;
+                state.selectedTextId = null;
+                pendingStationFocusId = n.id;
+
+                renderAll();
+                refreshSidebar();
+                return;
+            }
+
+            // No modo mover: clique no vazio só deseleciona.
             if (state.selectedNodeIds.size || state.selectedEdgeId || state.selectedTextId) {
                 clearSelection();
                 renderAll();
