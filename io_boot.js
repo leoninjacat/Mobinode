@@ -1234,6 +1234,11 @@ if (dom.toolText) dom.toolText.addEventListener("click", () => {
     if (dom.btnUndo) dom.btnUndo.addEventListener("click", undo);
     if (dom.btnRedo) dom.btnRedo.addEventListener("click", redo);
 
+    if (dom.btnResetView) dom.btnResetView.addEventListener("click", () => {
+        if (typeof fitViewToContent === "function") fitViewToContent(80);
+    });
+
+
     // sidebar close
     if (dom.btnCloseSidebar) dom.btnCloseSidebar.addEventListener("click", () => showSidebar(false));
     if (dom.btnShowSidebar) dom.btnShowSidebar.addEventListener("click", () => showSidebar(true));

@@ -421,6 +421,7 @@ function makeStationShapeEl(shape, cx, cy, r, wMul = 1, hMul = 1) {
  sidebarTitle: $("sidebarTitle"),
  sidebarMeta: $("sidebarMeta"),
  btnCloseSidebar: $("btnCloseSidebar"),
+ btnResetView: $("btnResetView"),
 
  // panels
  stationPanel: $("stationPanel"),
@@ -1050,61 +1051,81 @@ function setSectionState(sectionEl, emptyEl, contentEl, enabled) {
     }
 
     // =========================
-    // Pinch to Zoom (touch)
-    // Ctrl+F: pinchStartDist
+    // Pinch real (zoom + pan)
+    // Ctrl+F: pinchActive
     // =========================
+    let pinchActive = false;
     let pinchStartDist = 0;
     let pinchStartZoom = 1;
-    let pinchStartMid = null;
+    let pinchStartMid = null;      // {x,y} em screen coords
+    let pinchStartView = null;     // {x,y,z}
 
-    function touchDistance(t1, t2) {
+    function _touchDist(t1, t2) {
         const dx = t2.clientX - t1.clientX;
         const dy = t2.clientY - t1.clientY;
         return Math.hypot(dx, dy);
     }
 
-    function touchMidpoint(t1, t2) {
-        return {
-            x: (t1.clientX + t2.clientX) / 2,
-            y: (t1.clientY + t2.clientY) / 2
-        };
+    function _touchMid(t1, t2) {
+        return { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
     }
 
+    // 🔎 Ctrl+F: dom.viewport.addEventListener("touchstart"
     dom.viewport.addEventListener("touchstart", (e) => {
         if (e.touches.length === 2) {
-            pinchStartDist = touchDistance(e.touches[0], e.touches[1]);
-            pinchStartZoom = state.view.z;
-            pinchStartMid = touchMidpoint(e.touches[0], e.touches[1]);
-        }
-    }, { passive: false });
-
-    dom.viewport.addEventListener("touchmove", (e) => {
-        if (e.touches.length === 2) {
             e.preventDefault();
+            pinchActive = true;
 
-            const newDist = touchDistance(e.touches[0], e.touches[1]);
-            const scale = newDist / pinchStartDist;
-
-            let newZoom = clamp(pinchStartZoom * scale, CFG.MIN_Z, CFG.MAX_Z);
-
-            // mantém o ponto central fixo
-            const mid = touchMidpoint(e.touches[0], e.touches[1]);
-            const worldBefore = screenToWorld(pinchStartMid.x, pinchStartMid.y);
-
-            state.view.z = newZoom;
-
-            const worldAfter = screenToWorld(mid.x, mid.y);
-
-            state.view.x += (worldAfter.x - worldBefore.x) * state.view.z;
-            state.view.y += (worldAfter.y - worldBefore.y) * state.view.z;
-
-            applyView();
+            pinchStartDist = _touchDist(e.touches[0], e.touches[1]);
+            pinchStartZoom = state.view.z;
+            pinchStartMid = _touchMid(e.touches[0], e.touches[1]);
+            pinchStartView = { x: state.view.x, y: state.view.y, z: state.view.z };
         }
     }, { passive: false });
 
-    dom.viewport.addEventListener("touchend", () => {
-        pinchStartDist = 0;
-    });
+    // 🔎 Ctrl+F: dom.viewport.addEventListener("touchmove"
+    dom.viewport.addEventListener("touchmove", (e) => {
+        if (!pinchActive) return;
+        if (e.touches.length !== 2) return;
+
+        e.preventDefault();
+
+        const mid = _touchMid(e.touches[0], e.touches[1]);
+        const dist = _touchDist(e.touches[0], e.touches[1]);
+
+        const scale = dist / Math.max(1e-6, pinchStartDist);
+        const newZ = clamp(pinchStartZoom * scale, CFG.MIN_Z, CFG.MAX_Z);
+
+        // (1) pan com 2 dedos: deslocamento do midpoint em screen coords
+        const dxScreen = mid.x - pinchStartMid.x;
+        const dyScreen = mid.y - pinchStartMid.y;
+
+        // (2) zoom mantendo o ponto do “mundo” sob o midpoint estável
+        // mundo antes (com view inicial)
+        const r = dom.viewport.getBoundingClientRect();
+
+        // calcula world do midpoint usando view inicial
+        const worldX_before = (pinchStartMid.x - r.left - pinchStartView.x) / pinchStartView.z;
+        const worldY_before = (pinchStartMid.y - r.top  - pinchStartView.y) / pinchStartView.z;
+
+        // agora definimos z novo
+        state.view.z = newZ;
+
+        // queremos que esse mesmo world fique sob o midpoint atual
+        // então resolvemos x/y:
+        state.view.x = (mid.x - r.left) - worldX_before * state.view.z + dxScreen;
+        state.view.y = (mid.y - r.top)  - worldY_before * state.view.z + dyScreen;
+
+        applyView();
+    }, { passive: false });
+
+    // 🔎 Ctrl+F: dom.viewport.addEventListener("touchend"
+    dom.viewport.addEventListener("touchend", (e) => {
+        if (e.touches.length < 2) {
+            pinchActive = false;
+        }
+    }, { passive: true });
+
 
 
     function applyView() {
@@ -1112,6 +1133,41 @@ function setSectionState(sectionEl, emptyEl, contentEl, enabled) {
         const { x, y, z } = state.view;
         dom.world.setAttribute("transform", `translate(${x} ${y}) scale(${z})`);
     }
+
+    // =========================
+    // Reset / Fit view
+    // Ctrl+F: fitViewToContent
+    // =========================
+    function fitViewToContent(pad = 80) {
+        const svg = dom.viewport;
+        if (!svg) return;
+
+        // usa helper do io_boot.js
+        // 🔎 Ctrl+F: getMapBBoxFrom
+        const bb = (typeof getMapBBoxFrom === "function")
+        ? getMapBBoxFrom(svg, pad)
+        : { x: 0, y: 0, width: 1200, height: 800 };
+
+        const r = svg.getBoundingClientRect();
+        const vw = Math.max(1, r.width);
+        const vh = Math.max(1, r.height);
+
+        const zx = vw / Math.max(1, bb.width);
+        const zy = vh / Math.max(1, bb.height);
+        const z = clamp(Math.min(zx, zy), CFG.MIN_Z, CFG.MAX_Z);
+
+        // centraliza bbox
+        const cx = bb.x + bb.width / 2;
+        const cy = bb.y + bb.height / 2;
+
+        state.view.z = z;
+        state.view.x = (vw / 2) - cx * z;
+        state.view.y = (vh / 2) - cy * z;
+
+        applyView();
+    }
+    window.fitViewToContent = fitViewToContent;
+
 
     function setGhost(on, d = "") {
         if (!dom.ghost) return;
