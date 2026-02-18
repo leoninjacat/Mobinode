@@ -3,8 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="manifest" href="./manifest.json">
   <link rel="stylesheet" href="./app.css"/>
-  <title>Mobinode v5.3.0</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon_32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="./icons/favicon_16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
+  <meta name="theme-color" content="#0b0d12">
+  <title>Mobinode v5.4.0</title>
 </head>
 
 <body>
@@ -31,9 +36,7 @@
           <button class="dropdown-item" id="menuExportPNG" type="button">Exportar PNG…</button>
           <button class="dropdown-item" id="menuExportPDF" type="button">Exportar PDF…</button>
           <button class="dropdown-item" id="menuSaveCache" type="button">Salvar em cache</button>
-          <div class="dropdown-sep" role="separator"></div>
           <button class="dropdown-item danger" id="menuClear" type="button">Limpar…</button>
-          <div class="dropdown-sep" role="separator"></div>
           <button class="dropdown-item" id="btnConfig" title="Configurações">Configurações</button>
           <button class="dropdown-item" id="btnAbout" title="Sobre">Sobre</button>
         </div>
@@ -65,22 +68,25 @@
       <!-- Dock de manipulação (top-left, abaixo da topbar) -->
 <div id="dockManipulation" class="dockMini" role="group" aria-label="Dock de manipulação">
   <div id="menuManipulation" class="manipGroup" role="toolbar" aria-label="Manipulação">
-    <button id="toolPointer" class="toolbtn" aria-pressed="false" title="Seta">➚</button>
-    <button id="toolSelect" class="toolbtn" aria-pressed="false" title="Seleção retangular">⛶</button>
-    <button id="toolPan" class="toolbtn" aria-pressed="false" title="Pan">✥</button>
-    <button id="btnResetView" class="toolbtn" title="Resetar visualização">⤢</button>
+    <button id="toolPointer" class="toolbtn" aria-pressed="false" title="Seta">
+      <svg class="icon"><use href="#icon-seta"></use></svg>
+    </button>
+    <button id="toolSelect" class="toolbtn" aria-pressed="false" title="Seleção retangular">
+      <svg class="icon"><use href="#icon-select"></use></svg>
+    </button>
+    <button id="toolPan" class="toolbtn" aria-pressed="false" title="Pan">
+    <svg class="icon"><use href="#icon-pan"></use></svg>
+    </button>
+    <button id="btnResetView" class="toolbtn" title="Resetar visualização">
+      <svg class="icon"><use href="#icon-fitscreen"></use></svg>
+    </button>
     <button id="btnUndo" class="toolbtn" title="Desfazer (Ctrl+Z)">↺</button>
     <button id="btnRedo" class="toolbtn" title="Refazer (Ctrl+Y)">↻</button>
   </div>
 </div>
-
-
   <button id="btnShowSidebar" class="propsToggle" title="Abrir painel de propriedades" style="display:none;">
     ✏ Propriedades
   </button>
-
-
-
   <!-- Dock de ferramentas (desktop: lateral; mobile: inferior) -->
   <div id="dockTools" class="toolDock" role="toolbar" aria-label="Ferramentas">
     <div id="tools" class="toolgroup" aria-label="Ferramentas principais">
@@ -90,11 +96,20 @@
             <span class="tool-linebadge-text">1</span>
           </span>
         </span>
-      </button>      <button id="toolLine" class="toolbtn" aria-pressed="false" title="Linhas">🛤️</button>
-      <button id="toolConnections" class="toolbtn" aria-pressed="false" title="Conexões">⫘</button>
-      <button id="toolCurves" class="toolbtn" aria-pressed="false" title="Curvas (editar dobras)">╮</button>
+      </button>
+      <button id="toolLine" class="toolbtn" aria-pressed="false" title="Linhas">
+      <svg class="icon"><use href="#icon-lines"></use></svg>
+      </button>
+      <button id="toolConnections" class="toolbtn" aria-pressed="false" title="Conexões">
+        <svg class="icon"><use href="#icon-connections"></use></svg>
+      </button>
+      <button id="toolCurves" class="toolbtn" aria-pressed="false" title="Curvas (editar dobras)">
+      <svg class="icon"><use href="#icon-curves"></use></svg>
+      </button>
       <button id="toolText" class="toolbtn toolbtn-text" aria-pressed="false" title="Sinalização">T</button>
-      <button id="toolShapes" class="toolbtn" aria-pressed="false" title="Formas">⚪</button>
+      <button id="toolShapes" class="toolbtn" aria-pressed="false" title="Formas">
+      <svg class="icon"><use href="#icon-shapes"></use></svg>
+      </button>
     </div>
   </div>
 
@@ -124,7 +139,7 @@
   <aside id="sidebar">
     <header>
       <div>
-        <h3 id="sidebarTitle">Mobinode v5.3.0_dev</h3>
+        <h3 id="sidebarTitle">Mobinode v5.4.0_dev</h3>
         <div id="sidebarMeta" class="meta"></div>
       </div>
       <button id="btnCloseSidebar" class="iconbtn" title="Fechar">×</button>
@@ -919,7 +934,7 @@
         <main class="about-details">
           <section class="about-pane active" data-about-pane="app">
             <h2>Mobinode</h2>
-            <h4>versão 5.3.0</h4>
+            <h4>versão 5.4.0</h4>
             <p>
               Mobinode é um editor visual para criar mapas esquemáticos de transporte (linhas, estações,
               integrações e textos) direto no navegador — rápido, leve e focado em clareza.
@@ -1307,6 +1322,111 @@
     }
   })();
   </script>
+
+  <!-- SVG Sprite: biblioteca de ícones do Mobinode -->
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
+  <symbol id="icon-seta">
+  <svg class="icon" viewBox="0 0 6.35 6.35" aria-hidden="true" focusable="false">
+      <path
+        d="M 2.0321208,5.9727003 3.4557755,3.9066166 4.2241333,5.3182341 5.176054,0.25254608 1.1152791,2.9884572 l 1.599193,0.2724064 -1.5422472,2.18267 z"
+        fill="currentColor"
+      />
+    </svg>
+  </symbol>
+
+  <symbol id="icon-pan" viewBox="0 0 6.35 6.35">
+    <svg class="icon" viewBox="0 0 6.35 6.35" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M 3.175 0.79375 L 2.38125 1.5875 H 2.9104167 V 2.9104167 H 1.5875 V 2.38125 L 0.79375 3.175 L 1.5875 3.96875 V 3.4395833 H 2.9104167 V 4.7625 H 2.38125 L 3.175 5.55625 L 3.96875 4.7625 H 3.4395833 V 3.4395833 H 4.7625 V 3.96875 L 5.55625 3.175 L 4.7625 2.38125 V 2.9104167 H 3.4395833 V 1.5875 H 3.96875 Z"
+            fill="currentColor"
+          />
+        </svg>
+  </symbol>
+
+  <symbol id="icon-lines" viewBox="0 0 6.35 6.35">
+   <svg class="icon" viewBox="0 0 6.35 6.35" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M 4.1020752,0.78858236 C 3.7917918,0.80133358 3.4816843,0.90406714 3.2116903,1.1027751 L 1.2247314,2.5652181 C 0.50474741,3.0951059 0.35171212,4.1014271 0.88159993,4.8214111 1.4114877,5.5413951 2.4178089,5.6944305 3.137793,5.1645426 L 5.1247518,3.7020996 C 5.8447358,3.1722118 5.9977711,2.1658906 5.4678833,1.4459066 5.1367034,0.99591658 4.6192141,0.76733033 4.1020752,0.78858236 Z M 4.2503866,1.7306437 a 0.64896381,0.64896381 0 0 1 0.6490559,0.649056 0.64896381,0.64896381 0 0 1 -0.6490559,0.649056 0.64896381,0.64896381 0 0 1 -0.649056,-0.649056 0.64896381,0.64896381 0 0 1 0.649056,-0.649056 z m -1.9740398,1.407666 a 0.64896381,0.64896381 0 0 1 0.6485393,0.649056 0.64896381,0.64896381 0 0 1 -0.6485393,0.649056 0.64896381,0.64896381 0 0 1 -0.6490559,-0.649056 0.64896381,0.64896381 0 0 1 0.6490559,-0.649056 z"
+            fill="currentColor"
+            fill-rule="evenodd"
+          />
+        </svg>
+  </symbol>
+
+  <symbol id="icon-fitscreen" viewBox="0 0 6.35 6.35">
+    <svg class="icon" viewBox="0 0 6.3499999 6.35" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 4.9554748,4.9345696 H 3.8450075 L 4.9555278,3.8729523 Z" fill="currentColor"/>
+      <path d="M 1.3218143,4.9345696 H 2.4322815 L 1.3217613,3.8729523 Z" fill="currentColor"/>
+      <path d="M 4.9588489,1.5698396 V 2.6615027 L 3.8789452,1.5697873 Z" fill="currentColor"/>
+      <path d="M 1.3184401,1.5698396 V 2.6615027 L 2.3983438,1.5697873 Z" fill="currentColor"/>
+      <path d="m 0.51447475,0.8653069 v 4.817307 H 5.718149 V 0.8653069 Z M 0.88787338,1.1632676 H 5.3703646 V 5.384653 H 0.88787338 Z" fill="currentColor"/>
+    </svg>
+    </symbol>
+
+  <symbol id="icon-connections" viewBox="0 0 6.35 6.35">
+    <svg class="icon" viewBox="0 0 6.35 6.35" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+        <g transform="matrix(0.94785685,0,0,0.94785685,0.18374034,0.188401)">
+          <circle cx="5.1215525" cy="1.5668676" r="0.73666161" fill="currentColor" stroke="currentColor" stroke-width="0.264583" />
+          <rect x="3.0629563" y="1.2622279" width="1.3576338" height="0.66774452" fill="currentColor" />
+          <circle cx="5.0981665" cy="4.735682" r="0.73666161" fill="currentColor" stroke="currentColor" stroke-width="0.264583" />
+          <rect x="1.6597912" y="4.4310422" width="2.7607989" height="0.66774452" fill="currentColor" />
+          <circle cx="1.028988" cy="4.735682" r="0.73666161" fill="currentColor" stroke="currentColor" stroke-width="0.264583" />
+          <path d="M 3.430446,1.881118 1.6136398,4.0808716 0.7834338,4.063332 3.0621154,1.2613869 3.5429916,1.5317885 Z" fill="currentColor" />
+        </g>
+      </svg>
+  </symbol>
+
+  <symbol id="icon-curves" viewBox="0 0 6.35 6.35">
+    <svg class="icon" viewBox="0 0 6.35 6.35" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M 0.69296675,1.3899526 H 3.7292427 L 5.8966582,5.144026 H 4.2830493 L 2.8168431,2.6044827 H 0.6897469 Z"
+          fill="currentColor"
+        />
+        <path
+          d="M 1.7802747,4.3549356 2.0296798,5.041008 2.8025862,2.8476252 0.85987569,3.8189803 1.4394016,4.0599503 0.69276078,4.7798909 1.0583247,5.1036761 Z"
+          fill="currentColor"
+        />
+      </svg>
+  </symbol>
+
+  <symbol id="icon-shapes" viewBox="0 0 6.35 6.35">
+    <svg class="icon" viewBox="0 0 6.3499999 6.35" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M 1.489775,2.9368702 A 1.1624911,1.1624911 0 0 0 1.3403623,2.9462968 1.1624911,1.1624911 0 0 0 0.32746691,4.0991783 1.1624911,1.1624911 0 0 0 1.489775,5.2619577 1.1624911,1.1624911 0 0 0 2.652083,4.1312289 1.1624911,1.1624911 0 0 0 2.6525544,4.0991783 1.1624911,1.1624911 0 0 0 1.489775,2.9368702 Z"
+          fill="currentColor"
+        />
+        <path
+          d="m 1.4574742,1.3799732 v 1.4385095 a 1.1624911,1.1624911 0 0 1 0.1494126,-0.00943 1.1624911,1.1624911 0 0 1 1.1627794,1.1623081 1.1624911,1.1624911 0 0 1 -4.713e-4,0.032051 H 3.4512142 L 4.081387,2.9127493 V 1.3799732 Z"
+          fill="currentColor"
+        />
+        <path
+          d="M 4.593569,2.3609381 3.2224602,4.7350443 H 6.011811 Z"
+          fill="currentColor"
+        />
+      </svg>
+  </symbol>
+
+  <symbol id="icon-select" viewBox="0 0 6.35 6.35">
+    <svg class="icon" viewBox="0 0 6.35 6.35" aria-hidden="true" focusable="false">
+    <g transform="matrix(1.1608292,0,0,1.1972853,-0.57374507,-0.60045653)" fill="currentColor">
+      <rect width="1.7213346" height="0.34891918" x="2.3610196" y="0.6629464" />
+      <rect width="0.98860431" height="0.34891918" x="4.814961" y="0.66290528" />
+      <rect width="0.98860431" height="0.34891918" x="0.66282284" y="0.66290528" />
+      <rect width="1.7213346" height="0.34891918" x="2.3610196" y="5.3035712" />
+      <rect width="0.98860431" height="0.34891918" x="4.814961" y="5.3035302" />
+      <rect width="0.98860431" height="0.34891918" x="0.66282284" y="5.3035302" />
+      <rect width="1.4465481" height="0.34891918" x="0.68620771" y="-1.0116725" transform="rotate(90)" />
+      <rect width="1.4920233" height="0.34891918" x="0.66347009" y="-5.8037519" transform="rotate(90)" />
+      <rect width="1.0136721" height="0.34891918" x="2.6307056" y="-1.0116725" transform="rotate(90)" />
+      <rect width="1.045539" height="0.34891918" x="2.6147721" y="-5.8037519" transform="rotate(90)" />
+      <rect width="1.4465481" height="0.34891918" x="4.1754007" y="-1.0116725" transform="rotate(90)" />
+      <rect width="1.4920233" height="0.34891918" x="4.1526628" y="-5.8037519" transform="rotate(90)" />
+    </g>
+    </svg>
+  </symbol>
+</svg>
+
+
 </body>
 
 </html>

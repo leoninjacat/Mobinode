@@ -1,0 +1,20 @@
+{
+  "name": "Mobinode",
+  "short_name": "Mobinode",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0b0d12",
+  "theme_color": "#0b0d12",
+  "icons": [
+    {
+      "src": "./icons/favicon_192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icons/favicon_512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
