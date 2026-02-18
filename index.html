@@ -13,6 +13,21 @@
 </head>
 
 <body>
+<!-- Splash cinematográfico -->
+<div id="splash" class="splash" aria-hidden="true">
+  <div class="splashBlur"></div>
+
+  <div class="splashCard" role="status" aria-live="polite">
+    <img class="splashLogo" src="./icons/favicon_192x192.png" alt="Mobinode" />
+    <div class="splashTitle">Mobinode</div>
+    <div class="splashSub">Carregando o mapa…</div>
+
+    <div class="splashBar" aria-hidden="true">
+      <div class="splashBarFill"></div>
+    </div>
+  </div>
+</div>
+
   <!-- Barra superior: título + menus estilo app (desktop) / hambúrguer (mobile) + ajuda -->
   <div id="ui" role="banner" aria-label="Barra superior">
     <div class="topbar-left">
@@ -1271,17 +1286,46 @@
   </svg>
 <div id="helpCorner" class="helpCorner" aria-label="Ajuda rápida"></div>
 
-
 <script src="./core.js"></script>
 <script src="./ui.js"></script>
 <script src="./interactions.js"></script>
 <script src="./io_boot.js"></script>
+
 <script>
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("./sw.js")
     .then(() => console.log("SW registrado"))
     .catch(err => console.error("Erro SW:", err));
 }
+</script>
+
+<script>
+  // Ctrl+F: Splash cinematográfico (hide logic)
+  (function(){
+    const splash = document.getElementById("splash");
+    if(!splash) return;
+
+    const MIN_MS = 2000;
+    const t0 = performance.now();
+
+    function hideSplash(){
+      const elapsed = performance.now() - t0;
+      const wait = Math.max(0, MIN_MS - elapsed);
+
+      setTimeout(() => {
+        splash.classList.add("is-hiding");
+        setTimeout(() => {
+          splash.style.display = "none";
+        }, 320);
+      }, wait);
+    }
+
+    // Some quando a página terminou de carregar (imagens + scripts)
+    window.addEventListener("load", hideSplash);
+
+    // Fail-safe: se algo der ruim, não deixa travado pra sempre
+    setTimeout(hideSplash, 8000);
+  })();
 </script>
 
 
