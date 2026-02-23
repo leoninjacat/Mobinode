@@ -1169,6 +1169,67 @@ function setSectionState(sectionEl, emptyEl, contentEl, enabled) {
     window.fitViewToContent = fitViewToContent;
 
 
+    // =========================
+    // Cinematic focus (zoom + center) on station
+    // Ctrl+F: flyToNodeAnimated
+    // =========================
+    let _flyAnim = null;
+    function easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function viewForWorldCenter(cx, cy, z) {
+        const r = dom.viewport.getBoundingClientRect();
+        const vw = Math.max(1, r.width);
+        const vh = Math.max(1, r.height);
+        return {
+            z,
+            x: (vw / 2) - cx * z,
+            y: (vh / 2) - cy * z,
+        };
+    }
+
+    function flyToNodeAnimated(nodeId, opts = {}) {
+        const n = findNode(nodeId);
+        if (!n || !dom.viewport) return;
+
+        const duration = Math.max(80, Number(opts.duration) || 560);
+        const minZoom = Number.isFinite(opts.minZoom) ? Number(opts.minZoom) : 1.75;
+        const targetZ = clamp(Math.max(state.view.z, minZoom), CFG.MIN_Z, CFG.MAX_Z);
+
+        const start = { x: state.view.x, y: state.view.y, z: state.view.z };
+        const end = viewForWorldCenter(n.x, n.y, targetZ);
+
+        if (_flyAnim) {
+            try { cancelAnimationFrame(_flyAnim.raf); } catch {}
+            _flyAnim = null;
+        }
+
+        const t0 = performance.now();
+        const step = (now) => {
+            const t = clamp((now - t0) / duration, 0, 1);
+            const e = easeInOutCubic(t);
+
+            state.view.x = start.x + (end.x - start.x) * e;
+            state.view.y = start.y + (end.y - start.y) * e;
+            state.view.z = start.z + (end.z - start.z) * e;
+            applyView();
+
+            if (t < 1) {
+                _flyAnim.raf = requestAnimationFrame(step);
+            } else {
+                _flyAnim = null;
+                // garante render final em estado consistente
+                renderAll();
+                refreshSidebar();
+            }
+        };
+
+        _flyAnim = { raf: requestAnimationFrame(step) };
+    }
+    window.flyToNodeAnimated = flyToNodeAnimated;
+
+
     function setGhost(on, d = "") {
         if (!dom.ghost) return;
         dom.ghost.style.display = on ? "block" : "none";
@@ -1850,54 +1911,6 @@ function renderLineEndpointBadges() {
                     t.fallbackColor = line.color || t.fallbackColor || "";
                 }
 
-                if (kind === "shapeRect" || kind === "shapeCircle") {
-                    const g = el("g");
-                    g.setAttribute("class", `map-text map-shape${selected ? " selected" : ""}`);
-                    g.setAttribute("data-id", tdata.id);
-
-                    const baseTransform = `translate(${tdata.x},${tdata.y})`;
-                    const rot = tdata.rotation
-                    ? ` rotate(${tdata.rotation})`
-                    : "";
-
-                    g.setAttribute("transform", baseTransform + rot);
-
-                    g.addEventListener("pointerdown", (ev) => { ev.stopPropagation(); onTextDown(ev, tdata.id); });
-
-                    let fill = tdata.fill || "#a020f0";
-                    if (tdata.fillMode === "line") {
-                        const ln = findLine(tdata.lineId);
-                        if (ln && ln.color) fill = ln.color;
-                    }
-
-                    if (kind === "shapeRect") {
-                        const rr = el("rect");
-                        rr.setAttribute("class", "shape-body");
-                        rr.setAttribute("x", String(-(tdata.w / 2)));
-                        rr.setAttribute("y", String(-(tdata.h / 2)));
-                        rr.setAttribute("width", String(tdata.w));
-                        rr.setAttribute("height", String(tdata.h));
-                        rr.setAttribute("rx", String(tdata.rx || 0));
-                        rr.setAttribute("ry", String(tdata.rx || 0));
-                        rr.setAttribute("fill", fill);
-                        rr.setAttribute("fill-opacity", String(tdata.opacity ?? 1));
-                        g.appendChild(rr);
-                    } else {
-                        const c = el("circle");
-                        c.setAttribute("class", "shape-body");
-                        c.setAttribute("cx", "0");
-                        c.setAttribute("cy", "0");
-                        c.setAttribute("r", String(tdata.r || 40));
-                        c.setAttribute("fill", fill);
-                        c.setAttribute("fill-opacity", String(tdata.opacity ?? 1));
-                        g.appendChild(c);
-                    }
-
-                    dom.textsG.appendChild(g);
-                    return;
-                }
-
-
                 if (kind === "badge") {
                     t.bold = true;
                     t.italic = false;
@@ -2295,7 +2308,15 @@ function renderLineEndpointBadges() {
                     `translate(${tdata.x} ${tdata.y}) rotate(${rot})`
                 );
 
-                g.addEventListener("pointerdown", (ev) => { ev.stopPropagation(); onTextDown(ev, tdata.id); });
+                g.addEventListener("pointerdown", (ev) => {
+                    // v5.5.2: Shapes precisam ser manipuláveis no modo seta (neutral)
+                    // e também dentro do próprio modo Formas.
+                    // Ctrl+F: v5.5.2: Shapes precisam ser manipuláveis
+                    if (state.tool === "text" || state.tool === "neutral" || state.tool === "shapes") {
+                        ev.stopPropagation();
+                        onTextDown(ev, tdata.id);
+                    }
+                });
 
                 let fill = tdata.fill || "#a020f0";
                 if (tdata.fillMode === "line") {
@@ -2370,7 +2391,12 @@ function renderLineEndpointBadges() {
                 g.setAttribute("class", `map-text map-signage-badge${selected ? " selected" : ""}`);
                 g.setAttribute("data-id", tdata.id);
                 g.setAttribute("transform", `translate(${tdata.x},${tdata.y})`);
-                g.addEventListener("pointerdown", (ev) => { ev.stopPropagation(); onTextDown(ev, tdata.id); });
+                g.addEventListener("pointerdown", (ev) => {
+                    if (state.tool === "text") {
+                        ev.stopPropagation();
+                        onTextDown(ev, tdata.id);
+                    }
+                });
 
                 const r = Math.max(10, (tdata.size || CFG.TEXT_DEFAULT_SIZE) * 0.55);
                 const c = el("circle");
@@ -2408,7 +2434,12 @@ function renderLineEndpointBadges() {
                 g.setAttribute("class", `map-text map-signage-badgename${selected ? " selected" : ""}`);
                 g.setAttribute("data-id", tdata.id);
                 g.setAttribute("transform", `translate(${tdata.x},${tdata.y})`);
-                g.addEventListener("pointerdown", (ev) => { ev.stopPropagation(); onTextDown(ev, tdata.id); });
+                g.addEventListener("pointerdown", (ev) => {
+                    if (state.tool === "text") {
+                        ev.stopPropagation();
+                        onTextDown(ev, tdata.id);
+                    }
+                });
 
                 const r = Math.max(10, (tdata.size || CFG.TEXT_DEFAULT_SIZE) * 0.55);
                 const c = el("circle");
@@ -2482,7 +2513,9 @@ function renderLineEndpointBadges() {
             }
             applyTextOutline(t, selected, !!tdata.outline);
             t.textContent = content;
-            t.addEventListener("pointerdown", (ev) => onTextDown(ev, tdata.id));
+            t.addEventListener("pointerdown", (ev) => {
+                if (state.tool === "text" || state.tool === "neutral") onTextDown(ev, tdata.id);
+            });
             dom.textsG.appendChild(t);
         }
     }

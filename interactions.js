@@ -7,6 +7,13 @@
 
 let connectionDraft = []; // guarda a ordem dos cliques (até 3)
 
+// =========================
+// Click vs Drag (estações)
+// Ctrl+F: pendingNodeDrag
+// =========================
+let pendingNodeDrag = null; // { nodeId, pointerId, downEv, startX, startY, started }
+const NODE_DRAG_THRESHOLD_PX = 4;
+
 
 // =========================
     // Pan / Zoom
@@ -305,7 +312,14 @@ let connectionDraft = []; // guarda a ordem dos cliques (até 3)
     // Text pointerdown
     // =========================
     function onTextDown(ev, textId) {
-        // Evita que o clique “vaze” pro viewport (no modo 📐) e crie sinalização por baixo.
+        // v5.5.1: Textos voltam a ser arrastáveis também no modo seta (neutral), como era antes.
+        // O bug de "seleção azul" é resolvido via CSS (user-select:none) + preventDefault aqui.
+        // v5.5.2: Shapes também são elementos do grupo de textos (state.texts).
+        // Então, no modo "Formas" a gente também precisa deixar selecionar/arrastar.
+        // Ctrl+F: state.tool !== "text" && state.tool !== "neutral" && state.tool !== "shapes"
+        if (state.tool !== "text" && state.tool !== "neutral" && state.tool !== "shapes") return;
+
+        // Evita que o clique “vaze” pro viewport e crie sinalização por baixo.
         try { ev.stopPropagation(); } catch {}
         try { ev.preventDefault(); } catch {}
 
@@ -326,8 +340,17 @@ let connectionDraft = []; // guarda a ordem dos cliques (até 3)
             renderAll();
             refreshSidebar();
 
-            pushHistory();
-            startNodeDrag(ev, nodeId);
+            // v5.5.0: click foca/centraliza (com animação). Drag só inicia ao passar um limiar.
+            // Ctrl+F: NODE_DRAG_THRESHOLD_PX
+            pendingNodeDrag = {
+                nodeId,
+                pointerId: ev.pointerId,
+                downEv: { pointerId: ev.pointerId, clientX: ev.clientX, clientY: ev.clientY },
+                startX: ev.clientX,
+                startY: ev.clientY,
+                started: false,
+            };
+            try { dom.viewport.setPointerCapture(ev.pointerId); } catch {}
             return;
         }
 
@@ -345,8 +368,16 @@ let connectionDraft = []; // guarda a ordem dos cliques (até 3)
             if (ev.shiftKey) toggleSelectionNode(nodeId);
             else if (!state.selectedNodeIds.has(nodeId)) setSingleSelectionNode(nodeId);
 
-            pushHistory();
-            startNodeDrag(ev, nodeId);
+            // Mesmo comportamento do modo neutro: click seleciona/centraliza; drag ao mover.
+            pendingNodeDrag = {
+                nodeId,
+                pointerId: ev.pointerId,
+                downEv: { pointerId: ev.pointerId, clientX: ev.clientX, clientY: ev.clientY },
+                startX: ev.clientX,
+                startY: ev.clientY,
+                started: false,
+            };
+            try { dom.viewport.setPointerCapture(ev.pointerId); } catch {}
             renderAll();
             refreshSidebar();
             return;
@@ -987,6 +1018,20 @@ let connectionDraft = []; // guarda a ordem dos cliques (até 3)
     }
 
     function onViewportMove(ev) {
+        // v5.5.0: inicia drag de estação somente após limiar de movimento
+        // Ctrl+F: pendingNodeDrag
+        if (pendingNodeDrag && ev.pointerId === pendingNodeDrag.pointerId && !pendingNodeDrag.started) {
+            const dx = ev.clientX - pendingNodeDrag.startX;
+            const dy = ev.clientY - pendingNodeDrag.startY;
+            if ((dx * dx + dy * dy) >= (NODE_DRAG_THRESHOLD_PX * NODE_DRAG_THRESHOLD_PX)) {
+                pendingNodeDrag.started = true;
+                // histórico: só grava quando realmente virou drag
+                pushHistory();
+                // inicia drag a partir do ponto original de down (não do move)
+                startNodeDrag(pendingNodeDrag.downEv, pendingNodeDrag.nodeId);
+            }
+        }
+
         if (isPanning) return movePan(ev);
         if (isDraggingText) return moveTextDrag(ev);
         if (isDraggingNodes) return moveNodeDrag(ev);
@@ -997,6 +1042,32 @@ let connectionDraft = []; // guarda a ordem dos cliques (até 3)
     }
 
     function onViewportUp(ev) {
+        // v5.5.0: clique (sem arrastar) em estação faz zoom+centralização cinematográfica
+        // Ctrl+F: flyToNodeAnimated
+        if (pendingNodeDrag && ev.pointerId === pendingNodeDrag.pointerId) {
+            try { dom.viewport.releasePointerCapture(ev.pointerId); } catch {}
+
+            const nodeId = pendingNodeDrag.nodeId;
+            const didDrag = !!pendingNodeDrag.started;
+            pendingNodeDrag = null;
+
+            if (!didDrag) {
+                try {
+                    if (typeof window.flyToNodeAnimated === "function") {
+                        window.flyToNodeAnimated(nodeId, { duration: 560, minZoom: 1.75 });
+                    }
+                } catch {}
+            } else {
+                // se virou drag, finaliza normalmente
+                if (isDraggingNodes && ev.pointerId === dragPointerId) {
+                    stopNodeDrag();
+                    renderAll();
+                    refreshSidebar();
+                }
+            }
+            return;
+        }
+
         if (isPanning && ev.pointerId === panPointerId) {
             try { dom.viewport.releasePointerCapture(ev.pointerId); } catch {}
             stopPan();

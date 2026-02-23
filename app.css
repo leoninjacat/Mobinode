@@ -1069,7 +1069,17 @@ body.metapainel .acc-body{ padding: 0; }
 /* Line number badge (map) */
 .line-badge{ pointer-events:none; }
 .line-badge-circle{ stroke: rgba(255,255,255,.65); stroke-width: 2; }
-.line-badge-text{ fill: #0b0d12; font-weight: 900; font-size: 14px; font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif; }
+.line-badge-text{ fill: #0b0d12; font-weight: 900; font-size: 14px; font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif; user-select:none; }
+
+/* v5.5.1: evita seleção acidental de texto no mapa (aquele "azul" do print) */
+/* Ctrl+F: no-map-text-select */
+.no-map-text-select,
+#viewport,
+#viewport svg,
+#viewport text{
+  -webkit-user-select: none;
+  user-select: none;
+}
 
 
 /* Dropdown "Arquivo" */
