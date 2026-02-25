@@ -98,7 +98,9 @@ const NODE_DRAG_THRESHOLD_PX = 4;
             n.y = snap(p0.y + dy);
         }
         renderAll();
-        refreshSidebar();
+        // v5.5.2_dev: durante drag não atualiza o painel a cada frame.
+        // Isso evita que refatorações do painel (refreshSidebar) matem o manuseio no meio do arrasto.
+        // Ctrl+F: v5.5.2_dev no sidebarTitle
     }
 
     function stopNodeDrag() {
@@ -139,7 +141,8 @@ const NODE_DRAG_THRESHOLD_PX = 4;
         t.y = snap(textDragStartPos.y + dy);
 
         renderAll();
-        refreshSidebar();
+        // v5.5.2_dev: durante drag não atualiza o painel a cada frame (refresh no pointerup).
+
     }
 
     function stopTextDrag() {
@@ -312,12 +315,9 @@ const NODE_DRAG_THRESHOLD_PX = 4;
     // Text pointerdown
     // =========================
     function onTextDown(ev, textId) {
-        // v5.5.1: Textos voltam a ser arrastáveis também no modo seta (neutral), como era antes.
-        // O bug de "seleção azul" é resolvido via CSS (user-select:none) + preventDefault aqui.
-        // v5.5.2: Shapes também são elementos do grupo de textos (state.texts).
-        // Então, no modo "Formas" a gente também precisa deixar selecionar/arrastar.
-        // Ctrl+F: state.tool !== "text" && state.tool !== "neutral" && state.tool !== "shapes"
-        if (state.tool !== "text" && state.tool !== "neutral" && state.tool !== "shapes") return;
+        // Só permite selecionar/arrastar textos no modo Texto.
+        // (Isso evita que textos/identificações “roubem” o drag de estações.)
+        if (state.tool !== "text") return;
 
         // Evita que o clique “vaze” pro viewport e crie sinalização por baixo.
         try { ev.stopPropagation(); } catch {}

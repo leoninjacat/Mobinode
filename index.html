@@ -9,7 +9,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="./icons/favicon_16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
   <meta name="theme-color" content="#0b0d12">
-  <title>Mobinode v5.5.0</title>
+  <title>Mobinode v5.5.2_dev</title>
 </head>
 
 <body>
@@ -154,185 +154,194 @@
   <aside id="sidebar">
     <header>
       <div>
-        <h3 id="sidebarTitle">Mobinode v5.5.0</h3>
+        <h3 id="sidebarTitle">Mobinode v5.5.2_dev</h3>
         <div id="sidebarMeta" class="meta"></div>
       </div>
       <button id="btnCloseSidebar" class="iconbtn" title="Fechar">×</button>
     </header>
 
+
+
     <div class="propsRoot">
+        <section id="accStation">
+          <summary>Estação</summary>
+          <div class="acc-body">
+            <div id="stationEmpty" class="empty-note">Selecione uma estação para editar.</div>
 
-      <section id="accStation">
-        <summary>Estação</summary>
-        <div class="acc-body">
-          <div id="stationEmpty" class="empty-note">Selecione uma estação para editar.</div>
-          <div id="stationPanel">
-          <div class="row">
-              <button id="btnAddStationAfter" title="Cria uma nova estação conectada à linha ativa">Nova estação</button>
-              <button id="btnDeleteStation">Excluir estação</button>
-            </div>
+            <div id="stationPanel">
+              <!-- Nome -->
+              <details open>
+                <h4>Nome da estação</h4>
 
-            <div class="field">
-              <label for="stationQuickPick">Ir para estação (linha ativa)</label>
-              <select id="stationQuickPick"></select>
-              <div class="smallnote">Selecionou aqui? O Mobinode seleciona a estação no mapa pra você editar tudo no painel.</div>
-            </div>
+                <div class="field">
+                  <label class="inline">
+                    <input id="useStationPrefix" type="checkbox" />
+                    Usar prefixo (acima)
+                  </label>
+                  <div class="smallnote">Ative se quiser mostrar uma linha/etiqueta pequena acima do nome.</div>
+                </div>
 
+                <div class="field" id="stationPrefixField" style="display:none;">
+                  <label for="stationPrefix">Prefixo (acima)</label>
+                  <input id="stationPrefix" type="text" placeholder="Ex.: Corinthians" />
+                  <div class="smallnote">Dica: use “/” ou Enter pra quebrar em mais de uma linha.</div>
+                </div>
 
-          <h4>Nome da estação</h4>
-            <div class="field">
-              <label class="inline">
-                <input id="useStationPrefix" type="checkbox" />
-                Usar prefixo (acima)
-              </label>
-              <div class="smallnote">Ative se quiser mostrar uma linha/etiqueta pequena acima do nome.</div>
-            </div>
+                <div class="field">
+                  <label for="stationName">Nome principal</label>
+                  <input id="stationName" type="text" placeholder="Ex.: Itaquera" />
+                  <div class="smallnote">Esse é o nome grande que aparece no mapa.</div>
+                </div>
 
-<div class="field" id="stationPrefixField" style="display:none;">
-  <label for="stationPrefix">Prefixo (acima)</label>
-  <input id="stationPrefix" type="text" placeholder="Ex.: Corinthians" />
-  <div class="smallnote">Dica: use “/” ou Enter pra quebrar em mais de uma linha.</div>
-</div>
+                <div class="field">
+                  <label class="inline">
+                    <input id="useStationSuffix" type="checkbox" />
+                    Usar sufixo (abaixo)
+                  </label>
+                  <div class="smallnote">Ative se quiser mostrar uma linha/etiqueta pequena abaixo do nome.</div>
+                </div>
 
-<div class="field">
-  <label for="stationName">Nome principal</label>
-  <input id="stationName" type="text" placeholder="Ex.: Itaquera" />
-  <div class="smallnote">Esse é o nome grande que aparece no mapa.</div>
-</div>
+                <div class="field" id="stationSuffixField" style="display:none;">
+                  <label for="stationSuffix">Sufixo (abaixo)</label>
+                  <input id="stationSuffix" type="text" placeholder="Ex.: Pernambucanas/Ultrafarma" />
+                  <div class="smallnote">Também aceita “/” ou Enter pra virar múltiplas linhas pequenas.</div>
+                </div>
 
-<div class="field">
-  <label class="inline">
-    <input id="useStationSuffix" type="checkbox" />
-    Usar sufixo (abaixo)
-  </label>
-  <div class="smallnote">Ative se quiser mostrar uma linha/etiqueta pequena abaixo do nome.</div>
-</div>
+                <div class="field">
+                  <label for="stationQuickPick">Ir para estação (linha ativa)</label>
+                  <select id="stationQuickPick"></select>
+                  <div class="smallnote">Selecionou aqui? O Mobinode seleciona a estação no mapa pra você editar tudo no painel.</div>
+                </div>
+              </details>
 
-<div class="field" id="stationSuffixField" style="display:none;">
-  <label for="stationSuffix">Sufixo (abaixo)</label>
-  <input id="stationSuffix" type="text" placeholder="Ex.: Pernambucanas/Ultrafarma" />
-  <div class="smallnote">Também aceita “/” ou Enter pra virar múltiplas linhas pequenas.</div>
-</div>
-            <div class="field">
-              <label for="stationOrientation">Orientação</label>
-              <select id="stationOrientation">
-                <option value="-90">↑ -90°</option>
-                <option value="-45">↗ -45°</option>
-                <option value="0">→ 0°</option>
-                <option value="45">↘ 45°</option>
-                <option value="90">↓ 90°</option>
-                <option value="135">↙ 135°</option>
-                <option value="180">← 180°</option>
-                <option value="-135">↖ -135°</option>
-              </select>
-              <div class="smallnote">Dica: isso gira o nome (e prefixo/sufixo) ao redor da estação.</div>
-            </div>
+              <!-- Forma / estilo -->
+              <details>
+                <h4>Estilo da estação</h4>
 
-            <div class="field">
-  <label>Ajuste fino do nome</label>
+                <div class="field">
+                  <label for="stationStyleShape">Forma</label>
+                  <select id="stationStyleShape">
+                    <option value="circle">Círculo</option>
+                    <option value="square">Quadrado</option>
+                    <option value="diamond">Losango</option>
+                    <option value="pill">Pílula</option>
+                  </select>
+                </div>
 
-  <div class="slider-field" style="margin-top:6px;">
-    <span class="smallnote" style="min-width:18px;">X</span>
-    <input id="stationLabelOffsetXRange" type="range" min="-120" max="120" step="1" value="0" />
-    <input id="stationLabelOffsetX" class="num" type="number" min="-120" max="120" step="1" value="0" />
-  </div>
-
-  <div class="slider-field" style="margin-top:6px;">
-    <span class="smallnote" style="min-width:18px;">Y</span>
-    <input id="stationLabelOffsetYRange" type="range" min="-120" max="120" step="1" value="0" />
-    <input id="stationLabelOffsetY" class="num" type="number" min="-120" max="120" step="1" value="0" />
-  </div>
-
-  <div class="field" style="margin-top:8px;">
-    <button id="btnStationLabelOffsetReset" type="button">Redefinir ajuste fino</button>
-  </div>
-
-  <div class="smallnote">Move o nome em X/Y sem mexer na orientação. Ótimo pra alinhar em casos chatos.</div>
-</div>
-
-
-            <div class="field" style="margin-top:10px;">
-              <button id="applyStationOrientationActiveLine" type="button">
-                Aplicar orientação em toda a linha
-              </button>
-            </div>
-
-            <div class="field">
-              <label>Posição (snap)</label>
-              <div id="stationPos" class="smallnote"></div>
-            </div>
-
-            <div class="field">
-                    <h4>Estilo da estação</h4>
-                      <label>Forma</label>
-                      <select id="stationStyleShape">
-                        <option value="circle">Círculo</option>
-        <option value="arc">Arco</option>
-                        <option value="square">Quadrado</option>
-                        <option value="diamond">Losango</option>
-                        <option value="pill">Pílula</option>
-                      </select>
+                <div class="field">
                   <label>Tamanho (diâmetro)</label>
                   <div class="slider-field">
                     <input type="range" id="stationStyleSizeRange" min="4" max="80" step="1">
                     <input type="number" id="stationStyleSize" min="4" max="80" step="1" class="num" />
                   </div>
+                </div>
 
-                  <div id="stationStyleDims" style="display:none;">
-                    <label>Largura</label>
-                    <div class="slider-field">
-                      <input type="range" id="stationStyleWidthRange" min="0.6" max="2.6" step="0.05">
-                      <input type="number" id="stationStyleWidth" min="0.6" max="2.6" step="0.05" class="num" />
-                    </div>
-
-                    <label>Altura</label>
-                    <div class="slider-field">
-                      <input type="range" id="stationStyleHeightRange" min="0.6" max="2.6" step="0.05">
-                      <input type="number" id="stationStyleHeight" min="0.6" max="2.6" step="0.05" class="num" />
-                    </div>
-
-                    <div class="smallnote">Ajusta a proporção da estação (somente Quadrado e Pílula). Na Pílula, o maior eixo vira o "comprimento".</div>
+                <div class="field" id="stationStyleDims" style="display:none;">
+                  <label>Largura</label>
+                  <div class="slider-field">
+                    <input type="range" id="stationStyleWidthRange" min="0.6" max="2.6" step="0.05">
+                    <input type="number" id="stationStyleWidth" min="0.6" max="2.6" step="0.05" class="num" />
                   </div>
 
+                  <label>Altura</label>
+                  <div class="slider-field">
+                    <input type="range" id="stationStyleHeightRange" min="0.6" max="2.6" step="0.05">
+                    <input type="number" id="stationStyleHeight" min="0.6" max="2.6" step="0.05" class="num" />
+                  </div>
+
+                  <div class="smallnote">Ajusta a proporção da estação (somente Quadrado e Pílula). Na Pílula, o maior eixo vira o &quot;comprimento&quot;.</div>
+                </div>
+
+                <div class="field">
                   <label>Tamanho da borda</label>
                   <div class="slider-field">
                     <input type="range" id="stationStyleStrokeWidthRange" min="0" max="20" step="1">
                     <input type="number" id="stationStyleStrokeWidth" min="0" max="20" step="1" class="num" />
                   </div>
-
-                  <label>Cor de preenchimento</label>
-                  <div class="inline">
-                  <input type="color" id="stationStyleFill">
-                  <button type="button" id="btnStationFillDefault" class="color-action">Preenchimento padrão</button>
-                  </div>
-
-                  <label>Cor da borda</label>
-                  <div class="inline">
-                  <input type="color" id="stationStyleStroke">
-                  <button type="button" id="btnStationStrokeLine" class="color-action">Borda com a cor da linha</button>
-                  </div>
-
-                  <button id="applyStationStyleActiveLine" type="button">
-                    Aplicar às estações da linha ativa
-                  </button>
-                  <button id="applyStationStyleAllStations" type="button">
-                    Aplicar a todas as estações
-                  </button>
-                  <button id="applyStationStyleSelection" type="button" style="display:none;">
-                    Aplicar às estações selecionadas
-                  </button>
                 </div>
 
+                <div class="field">
+                  <label>Cor de preenchimento</label>
+                  <div class="inline">
+                    <input type="color" id="stationStyleFill">
+                    <button type="button" id="btnStationFillDefault" class="color-action">Preenchimento padrão</button>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label>Cor da borda</label>
+                  <div class="inline">
+                    <input type="color" id="stationStyleStroke">
+                    <button type="button" id="btnStationStrokeLine" class="color-action">Borda com a cor da linha</button>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <button id="applyStationStyleActiveLine" type="button">Aplicar às estações da linha ativa</button>
+                  <button id="applyStationStyleAllStations" type="button">Aplicar a todas as estações</button>
+                  <button id="applyStationStyleSelection" type="button" style="display:none;">Aplicar às estações selecionadas</button>
+                </div>
+              </details>
+
+              <!-- Orientação / ajuste fino -->
+              <details>
+                <div class="field">
+                  <label for="stationOrientation">Orientação</label>
+                  <select id="stationOrientation">
+                    <option value="-90">↑ -90°</option>
+                    <option value="-45">↗ -45°</option>
+                    <option value="0">→ 0°</option>
+                    <option value="45">↘ 45°</option>
+                    <option value="90">↓ 90°</option>
+                    <option value="135">↙ 135°</option>
+                    <option value="180">← 180°</option>
+                    <option value="-135">↖ -135°</option>
+                  </select>
+                  <div class="smallnote">Dica: isso gira o nome (e prefixo/sufixo) ao redor da estação.</div>
+                </div>
+
+                <div class="field">
+                  <label>Ajuste fino do nome</label>
+
+                  <div class="slider-field" style="margin-top:6px;">
+                    <span class="smallnote" style="min-width:18px;">X</span>
+                    <input id="stationLabelOffsetXRange" type="range" min="-120" max="120" step="1" value="0" />
+                    <input id="stationLabelOffsetX" class="num" type="number" min="-120" max="120" step="1" value="0" />
+                  </div>
+
+                  <div class="slider-field" style="margin-top:6px;">
+                    <span class="smallnote" style="min-width:18px;">Y</span>
+                    <input id="stationLabelOffsetYRange" type="range" min="-120" max="120" step="1" value="0" />
+                    <input id="stationLabelOffsetY" class="num" type="number" min="-120" max="120" step="1" value="0" />
+                  </div>
+
+                  <div class="field" style="margin-top:8px;">
+                    <button id="btnStationLabelOffsetReset" type="button">Redefinir ajuste fino</button>
+                  </div>
+
+                  <div class="smallnote">Move o nome em X/Y sem mexer na orientação. Ótimo pra alinhar em casos chatos.</div>
+                </div>
+
+                <div class="field" style="margin-top:10px;">
+                  <button id="applyStationOrientationActiveLine" type="button">Aplicar orientação em toda a linha</button>
+                </div>
+
+                <div class="field">
+                  <label>Posição (snap)</label>
+                  <div id="stationPos" class="smallnote"></div>
+                </div>
+              </details>
+              <div class="row">
+                  <button id="btnAddStationAfter" title="Cria uma nova estação conectada à linha ativa">Nova estação</button>
+                  <button id="btnDeleteStation">Excluir estação</button>
+                </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
       <section id="accLine">
-        <summary>Linhas</summary>
         <div class="acc-body">
-
-        <!-- lista de linhas-->
-          <div id="linePanel">
+          <div id="stationTabNamePanel" class="props-tab-panel" data-tab="alllines" style="display:none;">
             <h4>Todas as linhas</h4>
             <div class="smallnote">Dica: clique numa linha na lista pra torná-la ativa.</div>
             <div class="row">
@@ -344,101 +353,103 @@
               <label for="lineName">Nome</label>
               <input id="lineName" type="text" placeholder="Ex.: Linha Azul" />
             </div>
-
-            <div class="field" id="lineDefaultOrientationField" style="display:none;">
-              <label for="lineDefaultOrientation">Orientação padrão</label>
-              <select id="lineDefaultOrientation">
-                <option value="">Selecionar...</option>
-                <option value="-90">↑ -90°</option>
-                <option value="-45">↗ -45°</option>
-                <option value="0">→ 0°</option>
-                <option value="45">↘ 45°</option>
-                <option value="90">↓ 90°</option>
-                <option value="135">↙ 135°</option>
-                <option value="180">← 180°</option>
-                <option value="-135">↖ -135°</option>
-              </select>
-              <div class="field">
-              <label class="inline">
-                <input id="lineApplyDefaultOrientation" type="checkbox" />
-                Aplicar orientação padrão...
-              </label>
-              <div class="smallnote">Ative para aplicar uma orientação em massa nas estações dessa linha.</div>
-            </div>
-              <div class="smallnote">Ao escolher uma opção, o app vai pedir confirmação.</div>
-            </div>
-
-          <div class="field">
-            <label class="inline inline-between">
-              <span>Identificação</span>
-              <span class="inline">
-                <input id="lineBadgeEnabled" type="checkbox" />
-              </span>
-            </label>
-            <div class="smallnote">Mostra um círculo com a cor da linha e um texto curto no traçado.</div>
           </div>
-
-          <div class="field">
-            <label for="lineBadgeText">Texto da identificação (Max. 2 caract.)</label>
-            <input id="lineBadgeText" type="text" maxlength="2" placeholder="Ex.: 1, A, 1A etc. Aceitamos emoji!" />
-            <div class="smallnote">Dica: você pode usar 1 ou 2 caracteres (incluindo emoji). O app vai cortar o excesso automaticamente.</div>
-          </div>
-
-          <div class="field">
-            <label>Posição da indicação na linha</label>
-            <div class="radio-group" role="radiogroup" aria-label="Posição da indicação na linha">
-              <label class="radio-option"><input id="lineBadgePosStart" type="radio" name="lineBadgePos" value="start" /> No início</label>
-              <label class="radio-option"><input id="lineBadgePosEnd" type="radio" name="lineBadgePos" value="end" /> No final</label>
-            </div>
-          </div>
+            <div id="stationTabNamePanel" class="props-tab-panel" data-tab="identification" style="display:none;">
+              <div class="field" id="lineDefaultOrientationField" style="display:none;">
+                <label for="lineDefaultOrientation">Orientação padrão</label>
+                <select id="lineDefaultOrientation">
+                  <option value="">Selecionar...</option>
+                  <option value="-90">↑ -90°</option>
+                  <option value="-45">↗ -45°</option>
+                  <option value="0">→ 0°</option>
+                  <option value="45">↘ 45°</option>
+                  <option value="90">↓ 90°</option>
+                  <option value="135">↙ 135°</option>
+                  <option value="180">← 180°</option>
+                  <option value="-135">↖ -135°</option>
+                </select>
+                <div class="field">
+                <label class="inline">
+                  <input id="lineApplyDefaultOrientation" type="checkbox" />
+                  Aplicar orientação padrão...
+                </label>
+                <div class="smallnote">Ative para aplicar uma orientação em massa nas estações dessa linha.</div>
+              </div>
+                <div class="smallnote">Ao escolher uma opção, o app vai pedir confirmação.</div>
+              </div>
 
             <div class="field">
-              <h4>Estilo da linha</h4>
-              <label>Cor</label>
-              <div class="inline">
-                <input id="lineColor" type="color" />
-                <input id="lineColorHex" type="text" placeholder="#3b82f6" />
+              <label class="inline inline-between">
+                <span>Identificação</span>
+                <span class="inline">
+                  <input id="lineBadgeEnabled" type="checkbox" />
+                </span>
+              </label>
+              <div class="smallnote">Mostra um círculo com a cor da linha e um texto curto no traçado.</div>
+            </div>
+
+            <div class="field">
+              <label for="lineBadgeText">Texto da identificação (Max. 2 caract.)</label>
+              <input id="lineBadgeText" type="text" maxlength="2" placeholder="Ex.: 1, A, 1A etc. Aceitamos emoji!" />
+              <div class="smallnote">Dica: você pode usar 1 ou 2 caracteres (incluindo emoji). O app vai cortar o excesso automaticamente.</div>
+            </div>
+
+            <div class="field">
+              <label>Posição da indicação na linha</label>
+              <div class="radio-group" role="radiogroup" aria-label="Posição da indicação na linha">
+                <label class="radio-option"><input id="lineBadgePosStart" type="radio" name="lineBadgePos" value="start" /> No início</label>
+                <label class="radio-option"><input id="lineBadgePosEnd" type="radio" name="lineBadgePos" value="end" /> No final</label>
               </div>
-              <label for="lineWidth">Espessura</label>
-              <div class="slider-field">
-                <input id="lineWidthRange" type="range" min="2" max="30" step="1" />
-                <input id="lineWidth" type="number" min="2" max="30" step="1" class="num" />
-              </div>
-              <button id="applyLineWidthAll" type="button">Aplicar espessura a todas as linhas</button>
-              <label for="lineStyle">Tipo de traço</label>
-              <select id="lineStyle">
-                <option value="solid">Sólido</option>
-                <option value="dashed">Tracejado</option>
-                <option value="dotted">Pontilhado</option>
-              </select>
-
-              <!-- v4.9.1: traço secundário (estilo Recife-like) -->
-              <div class="field" style="margin-top:12px;">
-                <label class="inline inline-between">
-                  <span>Traço secundário</span>
-                  <span class="inline"><input id="lineSecondaryEnabled" type="checkbox" /></span>
-                </label>
-                <div id="lineSecondaryControls" style="display:none; margin-top:8px;">
-                  <label for="lineSecondaryMode">Cor secundária</label>
-                  <select id="lineSecondaryMode">
-                    <option value="custom">Personalizada</option>
-                    <option value="line">Usar cor de outra linha</option>
-                  </select>
-
-                  <div id="lineSecondaryCustom" class="inline" style="margin-top:6px;">
-                    <input id="lineSecondaryColor" type="color" />
-                    <input id="lineSecondaryColorHex" type="text" placeholder="#f97316" />
-                  </div>
-
-                  <div id="lineSecondaryFromLine" style="margin-top:6px; display:none;">
-                    <select id="lineSecondaryLineId"></select>
-                  </div>
-                  <div class="smallnote">Pra trechos compartilhados: o segundo traço aparece por dentro da linha principal.</div>
+            </div>
+          </div>
+          <div id="stationTabNamePanel" class="props-tab-panel" data-tab="linestyle" style="display:none;">
+              <div class="field">
+                <h4>Estilo da linha</h4>
+                <label>Cor</label>
+                <div class="inline">
+                  <input id="lineColor" type="color" />
+                  <input id="lineColorHex" type="text" placeholder="#3b82f6" />
                 </div>
-              </div>
-        </div>
+                <label for="lineWidth">Espessura</label>
+                <div class="slider-field">
+                  <input id="lineWidthRange" type="range" min="2" max="30" step="1" />
+                  <input id="lineWidth" type="number" min="2" max="30" step="1" class="num" />
+                </div>
+                <button id="applyLineWidthAll" type="button">Aplicar espessura a todas as linhas</button>
+                <label for="lineStyle">Tipo de traço</label>
+                <select id="lineStyle">
+                  <option value="solid">Sólido</option>
+                  <option value="dashed">Tracejado</option>
+                  <option value="dotted">Pontilhado</option>
+                </select>
 
-        <!-- Estações interligadas -->
+                <!-- v4.9.1: traço secundário (estilo Recife-like) -->
+                <div class="field" style="margin-top:12px;">
+                  <label class="inline inline-between">
+                    <span>Traço secundário</span>
+                    <span class="inline"><input id="lineSecondaryEnabled" type="checkbox" /></span>
+                  </label>
+                  <div id="lineSecondaryControls" style="display:none; margin-top:8px;">
+                    <label for="lineSecondaryMode">Cor secundária</label>
+                    <select id="lineSecondaryMode">
+                      <option value="custom">Personalizada</option>
+                      <option value="line">Usar cor de outra linha</option>
+                    </select>
+
+                    <div id="lineSecondaryCustom" class="inline" style="margin-top:6px;">
+                      <input id="lineSecondaryColor" type="color" />
+                      <input id="lineSecondaryColorHex" type="text" placeholder="#f97316" />
+                    </div>
+
+                    <div id="lineSecondaryFromLine" style="margin-top:6px; display:none;">
+                      <select id="lineSecondaryLineId"></select>
+                    </div>
+                    <div class="smallnote">Pra trechos compartilhados: o segundo traço aparece por dentro da linha principal.</div>
+                  </div>
+                </div>
+            </div>
+          </div>
+          <div id="stationTabNamePanel" class="props-tab-panel" data-tab="lineconnections" style="display:none;">
             <div id="edgeActions">
             <div class="section-title">Estações conectadas (linha ativa)</div>
             <div id="lineStations" class="smallnote"></div>
@@ -457,11 +468,9 @@
                 <div class="smallnote">Muda como integrações entre linhas são desenhadas.</div>
               </div>
             </div>
-          </div>
-
-            <div class="row">
-              <button id="btnDeleteLine">Excluir linha</button>
-            </div>
+              <div class="row">
+                <button id="btnDeleteLine">Excluir linha</button>
+              </div>
           </div>
         </div>
       </section>
@@ -949,7 +958,7 @@
         <main class="about-details">
           <section class="about-pane active" data-about-pane="app">
             <h2>Mobinode</h2>
-            <h4>versão 5.5.0</h4>
+            <h4>versão 5.4.0</h4>
             <p>
               Mobinode é um editor visual para criar mapas esquemáticos de transporte (linhas, estações,
               integrações e textos) direto no navegador — rápido, leve e focado em clareza.
@@ -964,7 +973,6 @@
           <section class="about-pane" data-about-pane="news">
             <h2>Novidades</h2>
             <ul class="about-list">
-              <li><b>v5.5.x</b> — Implementação de splash screen e animações de interação diversas.</li>
               <li><b>v5.1.x</b> — Implementado sistema de cache: Salve na memória do navegador o mapa que estiver trabalhando, para evitar perda de progresso.</li>
               <li><b>v5.0.x</b> — Adição de formas ao mapa, como retângulos, círculos e arcos.</li>
               <li><b>v4.9.x</b> — Melhorias de usabilidade em dispositivos móveis.</li>

@@ -1911,6 +1911,62 @@ function renderLineEndpointBadges() {
                     t.fallbackColor = line.color || t.fallbackColor || "";
                 }
 
+                if (kind === "shapeRect" || kind === "shapeCircle") {
+                    const g = el("g");
+                    g.setAttribute("class", `map-text map-shape${selected ? " selected" : ""}`);
+                    g.setAttribute("data-id", tdata.id);
+
+                    const baseTransform = `translate(${tdata.x},${tdata.y})`;
+                    const rot = tdata.rotation
+                    ? ` rotate(${tdata.rotation})`
+                    : "";
+
+                    g.setAttribute("transform", baseTransform + rot);
+
+                    g.addEventListener("pointerdown", (ev) => {
+                        // Só captura o clique quando estiver no modo Texto.
+                        // Isso evita que sinalizações/identificações roubem o drag de estações.
+                        // Ctrl+F: state.tool === "text"
+                        if (state.tool === "text") {
+                            ev.stopPropagation();
+                            onTextDown(ev, tdata.id);
+                        }
+                    });
+
+                    let fill = tdata.fill || "#a020f0";
+                    if (tdata.fillMode === "line") {
+                        const ln = findLine(tdata.lineId);
+                        if (ln && ln.color) fill = ln.color;
+                    }
+
+                    if (kind === "shapeRect") {
+                        const rr = el("rect");
+                        rr.setAttribute("class", "shape-body");
+                        rr.setAttribute("x", String(-(tdata.w / 2)));
+                        rr.setAttribute("y", String(-(tdata.h / 2)));
+                        rr.setAttribute("width", String(tdata.w));
+                        rr.setAttribute("height", String(tdata.h));
+                        rr.setAttribute("rx", String(tdata.rx || 0));
+                        rr.setAttribute("ry", String(tdata.rx || 0));
+                        rr.setAttribute("fill", fill);
+                        rr.setAttribute("fill-opacity", String(tdata.opacity ?? 1));
+                        g.appendChild(rr);
+                    } else {
+                        const c = el("circle");
+                        c.setAttribute("class", "shape-body");
+                        c.setAttribute("cx", "0");
+                        c.setAttribute("cy", "0");
+                        c.setAttribute("r", String(tdata.r || 40));
+                        c.setAttribute("fill", fill);
+                        c.setAttribute("fill-opacity", String(tdata.opacity ?? 1));
+                        g.appendChild(c);
+                    }
+
+                    dom.textsG.appendChild(g);
+                    return;
+                }
+
+
                 if (kind === "badge") {
                     t.bold = true;
                     t.italic = false;
@@ -2309,10 +2365,7 @@ function renderLineEndpointBadges() {
                 );
 
                 g.addEventListener("pointerdown", (ev) => {
-                    // v5.5.2: Shapes precisam ser manipuláveis no modo seta (neutral)
-                    // e também dentro do próprio modo Formas.
-                    // Ctrl+F: v5.5.2: Shapes precisam ser manipuláveis
-                    if (state.tool === "text" || state.tool === "neutral" || state.tool === "shapes") {
+                    if (state.tool === "text") {
                         ev.stopPropagation();
                         onTextDown(ev, tdata.id);
                     }
@@ -2514,7 +2567,7 @@ function renderLineEndpointBadges() {
             applyTextOutline(t, selected, !!tdata.outline);
             t.textContent = content;
             t.addEventListener("pointerdown", (ev) => {
-                if (state.tool === "text" || state.tool === "neutral") onTextDown(ev, tdata.id);
+                if (state.tool === "text") onTextDown(ev, tdata.id);
             });
             dom.textsG.appendChild(t);
         }
