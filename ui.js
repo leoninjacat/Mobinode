@@ -20,51 +20,6 @@ function ensureToastHost() {
         host.id = "toastHost";
         document.body.appendChild(host);
     }
-
-// =========================
-// Subtabs do painel Estação
-// =========================
-// Ctrl+F: stationPropsSubtabs
-(function stationPropsSubtabsInit() {
-    function setActive(tab) {
-        const root = document.getElementById("stationPanel");
-        const bar = document.getElementById("stationPropsSubtabs");
-        if (!root || !bar) return;
-
-        root.dataset.activeTab = tab;
-
-        const btns = bar.querySelectorAll("button[data-tab]");
-        btns.forEach((b) => {
-            const on = b.getAttribute("data-tab") === tab;
-            b.classList.toggle("is-active", on);
-            b.setAttribute("aria-selected", on ? "true" : "false");
-        });
-
-        const panels = root.querySelectorAll(".station-tab-panel[data-tab]");
-        panels.forEach((p) => {
-            const on = p.getAttribute("data-tab") === tab;
-            p.style.display = on ? "" : "none";
-        });
-    }
-
-    // Exposto pra refreshSidebar reaplicar depois de mudanças de modo.
-    window.applyStationPropsTab = function applyStationPropsTab() {
-        const root = document.getElementById("stationPanel");
-        if (!root) return;
-        const tab = root.dataset.activeTab || "name";
-        setActive(tab);
-    };
-
-    document.addEventListener("click", (ev) => {
-        const btn = ev.target && ev.target.closest ? ev.target.closest("#stationPropsSubtabs button[data-tab]") : null;
-        if (!btn) return;
-        ev.preventDefault();
-        setActive(btn.getAttribute("data-tab"));
-    });
-
-    // Estado inicial.
-    window.applyStationPropsTab();
-})();
     return host;
 }
 
@@ -809,11 +764,7 @@ function setMetaPanelActive(which){
     });
 }
 
-// Ctrl+F: refreshSidebar
 function refreshSidebar() {
-    // Se o painel estiver em refatoração (HTML mudando), qualquer null/undefined aqui
-    // não pode matar interações do mapa (ex.: arrastar shapes, arrastar estações, etc.).
-    try {
         refreshLinePanel();
         renderSignagePickers();
         bindConnectorPanel();
@@ -1076,16 +1027,7 @@ if (dom.textOutline) {
                 dom.applyMultiStationStyleSelection.disabled = !(selCount > 1 && !lock);
             }
         } catch(e) {}
-
-        // Garante que a subtab de Estação continue aplicada mesmo quando o painel
-        // é re-renderizado / trocado de modo.
-        if (typeof window.applyStationPropsTab === "function") {
-            window.applyStationPropsTab();
-        }
-    } catch (err) {
-        console.warn("refreshSidebar() falhou, mas seguimos o baile (pra não quebrar drag)", err);
     }
-}
 
 function refreshSidebarPreserveInput() {
     // Preserva caret/seleção do input ativo durante atualizações frequentes (digitação).

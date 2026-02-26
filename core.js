@@ -204,6 +204,14 @@ function makeStationShapeEl(shape, cx, cy, r, wMul = 1, hMul = 1) {
  toolModes: { network: "move", line: "move", connections: "move" },
  view: { x: 0, y: 0, z: 1 },
 
+ // Grade
+    // Ctrl+F: snapToGridFlags
+    snapStations: true,
+    snapTexts: true,
+    snapShapes: false,
+    // legado (mantido pra compatibilidade interna)
+    snapToGrid: true,
+
  // shapes tool
  shapeCreateArmed: false,
 
@@ -411,6 +419,12 @@ function makeStationShapeEl(shape, cx, cy, r, wMul = 1, hMul = 1) {
  // app settings (v4.6.0)
  dockPosSide: $("dockPosSide"),
  dockPosBottom: $("dockPosBottom"),
+
+ // grade
+    // Ctrl+F: snapToGridToggles
+    snapStationsToggle: $("snapStationsToggle"),
+    snapTextsToggle: $("snapTextsToggle"),
+    snapShapesToggle: $("snapShapesToggle"),
 
  aboutModal: $("aboutModal"),
  btnAboutClose: $("btnAboutClose"),
@@ -792,6 +806,71 @@ function applyPropsMode() {
 // =========================
 const DOCKPOS_KEY = "mobinode.dockPos";
 
+// =========================
+// Snap to grid (Configurações)
+// =========================
+// Ctrl+F: snapToGridFlags
+const SNAPGRID_KEY = "mobinode.snapToGrid"; // legado
+const SNAP_STATIONS_KEY = "mobinode.snapStations";
+const SNAP_TEXTS_KEY = "mobinode.snapTexts";
+const SNAP_SHAPES_KEY = "mobinode.snapShapes";
+
+function syncSnapToGridToggles() {
+    if (dom.snapStationsToggle) dom.snapStationsToggle.checked = !!state.snapStations;
+    if (dom.snapTextsToggle) dom.snapTextsToggle.checked = !!state.snapTexts;
+    if (dom.snapShapesToggle) dom.snapShapesToggle.checked = !!state.snapShapes;
+}
+
+function setSnapFlags(flags, persist = true) {
+    if (flags && typeof flags === "object") {
+        if ("stations" in flags) state.snapStations = !!flags.stations;
+        if ("texts" in flags) state.snapTexts = !!flags.texts;
+        if ("shapes" in flags) state.snapShapes = !!flags.shapes;
+    }
+
+    // legado interno
+    state.snapToGrid = !!state.snapStations;
+
+    syncSnapToGridToggles();
+
+    if (persist) {
+        try { localStorage.setItem(SNAP_STATIONS_KEY, state.snapStations ? "1" : "0"); } catch {}
+        try { localStorage.setItem(SNAP_TEXTS_KEY, state.snapTexts ? "1" : "0"); } catch {}
+        try { localStorage.setItem(SNAP_SHAPES_KEY, state.snapShapes ? "1" : "0"); } catch {}
+    }
+}
+
+function initSnapToGrid() {
+    // defaults
+    state.snapStations = true;
+    state.snapTexts = true;
+    state.snapShapes = false;
+
+    let ss = null, st = null, sh = null, legacy = null;
+    try {
+        ss = localStorage.getItem(SNAP_STATIONS_KEY);
+        st = localStorage.getItem(SNAP_TEXTS_KEY);
+        sh = localStorage.getItem(SNAP_SHAPES_KEY);
+        legacy = localStorage.getItem(SNAPGRID_KEY);
+    } catch {}
+
+    const hasNew = (ss != null) || (st != null) || (sh != null);
+    if (hasNew) {
+        if (ss != null) state.snapStations = (ss === "1" || ss === "true");
+        if (st != null) state.snapTexts = (st === "1" || st === "true");
+        if (sh != null) state.snapShapes = (sh === "1" || sh === "true");
+    } else if (legacy != null) {
+        // migração do toggle antigo
+        const on = (legacy === "1" || legacy === "true");
+        state.snapStations = on;
+        state.snapTexts = on;
+        state.snapShapes = on;
+    }
+
+    state.snapToGrid = !!state.snapStations;
+    syncSnapToGridToggles();
+}
+
 function normalizeDockPos(pos) {
     return (pos === "side" || pos === "lateral") ? "side" : "bottom";
 }
@@ -912,7 +991,18 @@ function setSectionState(sectionEl, emptyEl, contentEl, enabled) {
     // =========================
     const uid = () => Math.random().toString(36).slice(2, 9);
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-    const snap = (v) => Math.round(v / CFG.GRID) * CFG.GRID;
+    // Snap condicionado pela configuração
+    // Ctrl+F: snapRaw
+    const snapRaw = (v) => Math.round(v / CFG.GRID) * CFG.GRID;
+
+    // Ctrl+F: snapToGridFlags
+    const snapStations = (v) => (state.snapStations ? snapRaw(v) : v);
+    const snapTexts = (v) => (state.snapTexts ? snapRaw(v) : v);
+    const snapShapes = (v) => (state.snapShapes ? snapRaw(v) : v);
+
+    // snap() histórico do app: usado principalmente pra nós/linhas.
+    // Mantemos como "snap das estações".
+    const snap = (v) => snapStations(v);
 
     // Converte coordenadas do mundo para coordenadas alinhadas à grade
     const worldToGrid = (p) => ({ x: snap(p.x), y: snap(p.y) });
@@ -1167,67 +1257,6 @@ function setSectionState(sectionEl, emptyEl, contentEl, enabled) {
         applyView();
     }
     window.fitViewToContent = fitViewToContent;
-
-
-    // =========================
-    // Cinematic focus (zoom + center) on station
-    // Ctrl+F: flyToNodeAnimated
-    // =========================
-    let _flyAnim = null;
-    function easeInOutCubic(t) {
-        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    }
-
-    function viewForWorldCenter(cx, cy, z) {
-        const r = dom.viewport.getBoundingClientRect();
-        const vw = Math.max(1, r.width);
-        const vh = Math.max(1, r.height);
-        return {
-            z,
-            x: (vw / 2) - cx * z,
-            y: (vh / 2) - cy * z,
-        };
-    }
-
-    function flyToNodeAnimated(nodeId, opts = {}) {
-        const n = findNode(nodeId);
-        if (!n || !dom.viewport) return;
-
-        const duration = Math.max(80, Number(opts.duration) || 560);
-        const minZoom = Number.isFinite(opts.minZoom) ? Number(opts.minZoom) : 1.75;
-        const targetZ = clamp(Math.max(state.view.z, minZoom), CFG.MIN_Z, CFG.MAX_Z);
-
-        const start = { x: state.view.x, y: state.view.y, z: state.view.z };
-        const end = viewForWorldCenter(n.x, n.y, targetZ);
-
-        if (_flyAnim) {
-            try { cancelAnimationFrame(_flyAnim.raf); } catch {}
-            _flyAnim = null;
-        }
-
-        const t0 = performance.now();
-        const step = (now) => {
-            const t = clamp((now - t0) / duration, 0, 1);
-            const e = easeInOutCubic(t);
-
-            state.view.x = start.x + (end.x - start.x) * e;
-            state.view.y = start.y + (end.y - start.y) * e;
-            state.view.z = start.z + (end.z - start.z) * e;
-            applyView();
-
-            if (t < 1) {
-                _flyAnim.raf = requestAnimationFrame(step);
-            } else {
-                _flyAnim = null;
-                // garante render final em estado consistente
-                renderAll();
-                refreshSidebar();
-            }
-        };
-
-        _flyAnim = { raf: requestAnimationFrame(step) };
-    }
-    window.flyToNodeAnimated = flyToNodeAnimated;
 
 
     function setGhost(on, d = "") {
@@ -1923,15 +1952,7 @@ function renderLineEndpointBadges() {
 
                     g.setAttribute("transform", baseTransform + rot);
 
-                    g.addEventListener("pointerdown", (ev) => {
-                        // Só captura o clique quando estiver no modo Texto.
-                        // Isso evita que sinalizações/identificações roubem o drag de estações.
-                        // Ctrl+F: state.tool === "text"
-                        if (state.tool === "text") {
-                            ev.stopPropagation();
-                            onTextDown(ev, tdata.id);
-                        }
-                    });
+                    g.addEventListener("pointerdown", (ev) => { ev.stopPropagation(); onTextDown(ev, tdata.id); });
 
                     let fill = tdata.fill || "#a020f0";
                     if (tdata.fillMode === "line") {
@@ -2364,12 +2385,7 @@ function renderLineEndpointBadges() {
                     `translate(${tdata.x} ${tdata.y}) rotate(${rot})`
                 );
 
-                g.addEventListener("pointerdown", (ev) => {
-                    if (state.tool === "text") {
-                        ev.stopPropagation();
-                        onTextDown(ev, tdata.id);
-                    }
-                });
+                g.addEventListener("pointerdown", (ev) => { ev.stopPropagation(); onTextDown(ev, tdata.id); });
 
                 let fill = tdata.fill || "#a020f0";
                 if (tdata.fillMode === "line") {
@@ -2444,12 +2460,7 @@ function renderLineEndpointBadges() {
                 g.setAttribute("class", `map-text map-signage-badge${selected ? " selected" : ""}`);
                 g.setAttribute("data-id", tdata.id);
                 g.setAttribute("transform", `translate(${tdata.x},${tdata.y})`);
-                g.addEventListener("pointerdown", (ev) => {
-                    if (state.tool === "text") {
-                        ev.stopPropagation();
-                        onTextDown(ev, tdata.id);
-                    }
-                });
+                g.addEventListener("pointerdown", (ev) => { ev.stopPropagation(); onTextDown(ev, tdata.id); });
 
                 const r = Math.max(10, (tdata.size || CFG.TEXT_DEFAULT_SIZE) * 0.55);
                 const c = el("circle");
@@ -2487,12 +2498,7 @@ function renderLineEndpointBadges() {
                 g.setAttribute("class", `map-text map-signage-badgename${selected ? " selected" : ""}`);
                 g.setAttribute("data-id", tdata.id);
                 g.setAttribute("transform", `translate(${tdata.x},${tdata.y})`);
-                g.addEventListener("pointerdown", (ev) => {
-                    if (state.tool === "text") {
-                        ev.stopPropagation();
-                        onTextDown(ev, tdata.id);
-                    }
-                });
+                g.addEventListener("pointerdown", (ev) => { ev.stopPropagation(); onTextDown(ev, tdata.id); });
 
                 const r = Math.max(10, (tdata.size || CFG.TEXT_DEFAULT_SIZE) * 0.55);
                 const c = el("circle");
@@ -2566,9 +2572,7 @@ function renderLineEndpointBadges() {
             }
             applyTextOutline(t, selected, !!tdata.outline);
             t.textContent = content;
-            t.addEventListener("pointerdown", (ev) => {
-                if (state.tool === "text") onTextDown(ev, tdata.id);
-            });
+            t.addEventListener("pointerdown", (ev) => onTextDown(ev, tdata.id));
             dom.textsG.appendChild(t);
         }
     }

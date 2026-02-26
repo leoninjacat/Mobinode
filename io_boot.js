@@ -1466,6 +1466,24 @@ if (dom.toolText) dom.toolText.addEventListener("click", () => {
             });
         });
 
+        // Snap to grid (Configurações)
+        // Ctrl+F: snapToGridToggles (listener)
+        if (dom.snapStationsToggle) {
+            dom.snapStationsToggle.addEventListener("change", () => {
+                setSnapFlags({ stations: dom.snapStationsToggle.checked }, true);
+            });
+        }
+        if (dom.snapTextsToggle) {
+            dom.snapTextsToggle.addEventListener("change", () => {
+                setSnapFlags({ texts: dom.snapTextsToggle.checked }, true);
+            });
+        }
+        if (dom.snapShapesToggle) {
+            dom.snapShapesToggle.addEventListener("change", () => {
+                setSnapFlags({ shapes: dom.snapShapesToggle.checked }, true);
+            });
+        }
+
         if (dom.menuNewProject) {
             dom.menuNewProject.addEventListener("click", () => {
                 closeFileMenu();
@@ -3641,6 +3659,8 @@ function boot() {
 
     initTheme();
     initDockPosition();
+    // Ctrl+F: initSnapToGrid
+    initSnapToGrid();
 
     if (window.enforceMobileDockRules) window.enforceMobileDockRules();
 
