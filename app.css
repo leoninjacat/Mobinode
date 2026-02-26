@@ -993,7 +993,7 @@ body.metapainel .acc-body{ padding: 0; }
 .accordion details{
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 14px;
-  margin: 10px 0;
+  margin: 8px 0;
   overflow: hidden;
 }
 
@@ -1784,7 +1784,7 @@ padding: 6px;
 
     /* fica acima da dock */
     bottom: 100px;         /* (12px margem) + (~60px dock) + respiro */
-    height: 40vh;
+    height: 25vh;
 
     /* não encostar na topbar se a tela for pequena */
     max-height: calc(100vh - 84px - 64px);
