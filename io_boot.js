@@ -4,7 +4,7 @@
  */
 
 "use strict";
-console.log("%c[IO_BOOT] CARREGADO: v5.2.2", "color:#0f0;font-weight:bold");
+console.log("%c[IO_BOOT] CARREGADO: v5.7.0_RC3", "color:#0f0;font-weight:bold");
 
 
 // =========================
@@ -836,6 +836,456 @@ function clearAll(push = true) {
     refreshSidebar();
 }
 
+
+
+// =========================
+// Memória de mapas (5 slots locais)
+// Ctrl+F: MOBINODE_GALLERY_SLOTS_KEY
+// =========================
+const MOBINODE_GALLERY_SLOTS_KEY = "mobinode.gallery.v1";
+const MOBINODE_WHATS_NEW_VERSION = "v5.7.0_RC5"; // Ctrl+F: MOBINODE_WHATS_NEW_VERSION
+const MOBINODE_MEMORY_SLOTS_KEY = "mobinode.memorySlots.v1"; // legado
+const MOBINODE_GALLERY_SLOTS_MAX = 5;
+let currentGallerySlot = null; // Ctrl+F: currentGallerySlot
+
+function createEmptyGallerySlots() {
+    return Array.from({ length: MOBINODE_GALLERY_SLOTS_MAX }, (_, i) => ({
+        slot: i + 1,
+        name: `Mapa ${i + 1}`,
+        savedAt: null,
+        json: "",
+        preview: "",
+    }));
+}
+
+function isProbablyMapJSON(txt) {
+    try {
+        const data = JSON.parse(txt);
+        const s = data?.state || data;
+        return !!(s && (Array.isArray(s.nodes) || Array.isArray(s.lines) || Array.isArray(s.edges) || Array.isArray(s.texts)));
+    } catch {
+        return false;
+    }
+}
+
+function gallerySlotFromRaw(cur, idx) {
+    const fallback = createEmptyGallerySlots()[idx];
+    const jsonText = (typeof cur?.json === "string") ? cur.json : "";
+    return {
+        slot: idx + 1,
+        name: (typeof cur?.name === "string" && cur.name.trim()) ? cur.name.trim() : fallback.name,
+        savedAt: Number.isFinite(+cur?.savedAt) ? +cur.savedAt : null,
+        json: jsonText,
+        preview: (typeof cur?.preview === "string") ? cur.preview : (jsonText ? generateGalleryPreviewFromJSON(jsonText) : ""),
+    };
+}
+
+function readGallerySlots() {
+    try {
+        const raw = localStorage.getItem(MOBINODE_GALLERY_SLOTS_KEY) || localStorage.getItem(MOBINODE_MEMORY_SLOTS_KEY);
+        if (!raw) return createEmptyGallerySlots();
+
+        const parsed = JSON.parse(raw);
+        const arr = Array.isArray(parsed) ? parsed : [];
+        const base = createEmptyGallerySlots();
+        return base.map((_, idx) => gallerySlotFromRaw(arr[idx] || {}, idx));
+    } catch (e) {
+        console.error(e);
+        return createEmptyGallerySlots();
+    }
+}
+
+function writeGallerySlots(slots) {
+    try {
+        localStorage.setItem(MOBINODE_GALLERY_SLOTS_KEY, JSON.stringify(slots));
+        return true;
+    } catch (e) {
+        console.error(e);
+        return false;
+    }
+}
+
+function formatGallerySlotDate(ts) {
+    if (!ts) return "Vazio";
+    try {
+        return new Intl.DateTimeFormat("pt-BR", {
+            dateStyle: "short",
+            timeStyle: "short",
+        }).format(new Date(ts));
+    } catch {
+        return new Date(ts).toLocaleString("pt-BR");
+    }
+}
+
+function escapeHTML(str) {
+    return String(str || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+}
+
+function galleryMiniPathFromPoints(points) {
+    if (!Array.isArray(points) || !points.length) return "";
+    return points.map((pt, idx) => `${idx === 0 ? "M" : "L"}${pt.x} ${pt.y}`).join(" ");
+}
+
+function galleryEscapeAttr(str) {
+    return String(str || "").replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+}
+
+function generateGalleryPreview(parsedLike) {
+    let data = parsedLike;
+    try {
+        if (typeof data === "string") data = JSON.parse(data);
+    } catch {
+        return "";
+    }
+
+    const s = data?.state || data;
+    const nodes = Array.isArray(s?.nodes) ? s.nodes : [];
+    const edges = Array.isArray(s?.edges) ? s.edges : [];
+    const lines = Array.isArray(s?.lines) ? s.lines : [];
+    const texts = Array.isArray(s?.texts) ? s.texts : [];
+
+    if (!nodes.length && !edges.length && !texts.length) {
+        return `<svg viewBox="0 0 160 90" class="galleryThumbSvg" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="160" height="90" rx="12" fill="rgba(255,255,255,.04)"/><text x="80" y="48" text-anchor="middle" font-size="11" fill="rgba(255,255,255,.55)" font-family="system-ui, Arial">Sem mapa</text></svg>`;
+    }
+
+    const pts = [];
+    nodes.forEach(n => {
+        if (Number.isFinite(+n?.x) && Number.isFinite(+n?.y)) pts.push({x:+n.x,y:+n.y});
+    });
+    texts.forEach(t => {
+        if (Number.isFinite(+t?.x) && Number.isFinite(+t?.y)) pts.push({x:+t.x,y:+t.y});
+    });
+
+    let minX = 0, minY = 0, maxX = 1000, maxY = 600;
+    if (pts.length) {
+        minX = Math.min(...pts.map(p => p.x));
+        minY = Math.min(...pts.map(p => p.y));
+        maxX = Math.max(...pts.map(p => p.x));
+        maxY = Math.max(...pts.map(p => p.y));
+    }
+    const pad = 40;
+    const width = Math.max(160, maxX - minX + pad * 2);
+    const height = Math.max(90, maxY - minY + pad * 2);
+    const ox = minX - pad;
+    const oy = minY - pad;
+
+    const lineById = new Map(lines.map(l => [l.id, l]));
+    const nodeById = new Map(nodes.map(n => [n.id, n]));
+
+    const edgeSvg = edges.map(e => {
+        const a = nodeById.get(e.a);
+        const b = nodeById.get(e.b);
+        if (!a || !b) return "";
+        const color = galleryEscapeAttr(lineById.get(e.lineId)?.color || '#78aaff');
+        const width = Math.max(2, Number(lineById.get(e.lineId)?.width) || 8);
+        const points = [{x:+a.x-ox, y:+a.y-oy}, {x:+b.x-ox, y:+b.y-oy}];
+        return `<path d="${galleryMiniPathFromPoints(points)}" fill="none" stroke="${color}" stroke-width="${Math.max(2, width * 0.45)}" stroke-linecap="round" stroke-linejoin="round" opacity=".95"/>`;
+    }).join('');
+
+    const nodeSvg = nodes.map(n => {
+        const cx = (+n.x) - ox;
+        const cy = (+n.y) - oy;
+        const fill = galleryEscapeAttr((n.stationStyle && n.stationStyle.fill) ? n.stationStyle.fill : '#ffffff');
+        const stroke = galleryEscapeAttr((n.stationStyle && n.stationStyle.stroke) ? n.stationStyle.stroke : 'rgba(255,255,255,.35)');
+        const r = Math.max(2.8, ((Number(n.stationStyle?.size) || 20) / 2) * 0.4);
+        return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`;
+    }).join('');
+
+    return `<svg viewBox="0 0 ${width} ${height}" class="galleryThumbSvg" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="${width}" height="${height}" rx="12" fill="rgba(255,255,255,.04)"/>${edgeSvg}${nodeSvg}</svg>`;
+}
+
+function generateGalleryPreviewFromJSON(txt) {
+    try {
+        return generateGalleryPreview(JSON.parse(txt));
+    } catch {
+        return "";
+    }
+}
+
+function getCurrentGallerySlotLabel() {
+    if (!Number.isInteger(currentGallerySlot) || currentGallerySlot < 0) return "Salvar no slot atual";
+    return `Salvar no slot atual (Slot ${currentGallerySlot + 1})`;
+}
+
+function updateCurrentGallerySlotMenuLabel() {
+    if (!dom.menuSaveCache) return;
+    dom.menuSaveCache.textContent = getCurrentGallerySlotLabel();
+    dom.menuSaveCache.disabled = !Number.isInteger(currentGallerySlot) || currentGallerySlot < 0;
+}
+
+function openMemoryPanel() {
+    if (!dom.memoryPanel) return;
+    renderMemorySlotsPanel();
+    dom.memoryPanel.style.display = "grid";
+    dom.memoryPanel.setAttribute("aria-hidden", "false");
+}
+
+function closeMemoryPanel() {
+    if (!dom.memoryPanel) return;
+    dom.memoryPanel.style.display = "none";
+    dom.memoryPanel.setAttribute("aria-hidden", "true");
+}
+
+function saveCurrentMapToMemorySlot(slotIndex) {
+    const slots = readGallerySlots();
+    const slot = slots[slotIndex];
+    if (!slot) return;
+
+    slot.json = exportJSON();
+    slot.savedAt = Date.now();
+    if (!slot.name || /^Mapa\s+\d+$/i.test(slot.name)) {
+        slot.name = `Mapa ${slot.slot}`;
+    }
+    slot.preview = generateGalleryPreviewFromJSON(slot.json);
+
+    const ok = writeGallerySlots(slots);
+    if (!ok) {
+        alert("Não foi possível salvar nesse slot. O armazenamento local pode estar cheio ou bloqueado.");
+        return;
+    }
+
+    currentGallerySlot = slotIndex;
+    updateCurrentGallerySlotMenuLabel();
+    renderMemorySlotsPanel();
+    if (typeof showToast === "function") showToast(`Mapa salvo em ${slot.name}`);
+}
+
+function loadMemorySlot(slotIndex) {
+    const slots = readGallerySlots();
+    const slot = slots[slotIndex];
+    if (!slot || !slot.json) {
+        alert("Esse slot ainda está vazio.");
+        return;
+    }
+
+    const ok = confirm(`Abrir ${slot.name}?\n\nO mapa atual será substituído.`);
+    if (!ok) return;
+
+    try {
+        importJSON(slot.json);
+        currentGallerySlot = slotIndex;
+        updateCurrentGallerySlotMenuLabel();
+        history.undo.length = 0;
+        history.redo.length = 0;
+        updateUndoRedoButtons();
+        closeMemoryPanel();
+        if (typeof showToast === "function") showToast(`Mapa carregado de ${slot.name}`);
+    } catch (e) {
+        console.error(e);
+        alert("Não foi possível carregar esse slot. O JSON salvo pode estar corrompido.");
+    }
+}
+
+function renameMemorySlot(slotIndex, nextName) {
+    const slots = readGallerySlots();
+    const slot = slots[slotIndex];
+    if (!slot) return;
+
+    slot.name = String(nextName || "").trim() || `Mapa ${slot.slot}`;
+    if (!writeGallerySlots(slots)) {
+        alert("Não foi possível atualizar o nome do mapa.");
+        return;
+    }
+
+    renderMemorySlotsPanel();
+}
+
+function importJSONIntoMemorySlot(slotIndex, txt) {
+    if (!isProbablyMapJSON(txt)) {
+        alert("Esse texto não parece ser um JSON de mapa válido do Mobinode.");
+        return false;
+    }
+
+    const slots = readGallerySlots();
+    const slot = slots[slotIndex];
+    if (!slot) return false;
+
+    let pretty = txt;
+    try {
+        pretty = JSON.stringify(JSON.parse(txt), null, 2);
+    } catch {}
+
+    slot.json = pretty;
+    slot.savedAt = Date.now();
+    if (!slot.name || /^Mapa\s+\d+$/i.test(slot.name)) {
+        slot.name = `Mapa ${slot.slot}`;
+    }
+    slot.preview = generateGalleryPreviewFromJSON(pretty);
+
+    if (!writeGallerySlots(slots)) {
+        alert("Não foi possível importar esse JSON para o slot.");
+        return false;
+    }
+
+    renderMemorySlotsPanel();
+    if (typeof showToast === "function") showToast(`JSON importado para ${slot.name}`);
+    return true;
+}
+
+function openImportJSONIntoMemorySlot(slotIndex) {
+    const slots = readGallerySlots();
+    const slot = slots[slotIndex];
+    if (!slot) return;
+
+    openModal({
+        title: `Importar JSON para ${slot.name || `Mapa ${slot.slot}`}`,
+        value: slot.json || "",
+        readOnly: false,
+        primaryText: "Importar JSON",
+        secondaryText: "Cancelar",
+        tertiaryText: null,
+        onPrimary: (val, close) => {
+            const ok = importJSONIntoMemorySlot(slotIndex, val || "{}");
+            if (ok) close();
+        }
+    });
+}
+
+function openExportJSONFromMemorySlot(slotIndex) {
+    const slots = readGallerySlots();
+    const slot = slots[slotIndex];
+    if (!slot || !slot.json) {
+        alert("Esse slot ainda está vazio.");
+        return;
+    }
+
+    openModal({
+        title: `Exportar JSON de ${slot.name}`,
+        value: slot.json,
+        readOnly: true,
+        primaryText: "Copiar",
+        tertiaryText: "Baixar",
+        secondaryText: "Fechar",
+        onPrimary: async (val) => {
+            try {
+                await navigator.clipboard.writeText(val);
+            } catch {
+                try {
+                    dom.modalTextarea.focus();
+                    dom.modalTextarea.select();
+                    document.execCommand("copy");
+                } catch {}
+            }
+        },
+        onTertiary: (val) => {
+            downloadJSONFile(val);
+        }
+    });
+}
+
+function clearMemorySlot(slotIndex) {
+    const slots = readGallerySlots();
+    const slot = slots[slotIndex];
+    if (!slot) return;
+
+    const ok = confirm(`Limpar ${slot.name}?\n\nIsso apaga o mapa salvo nesse espaço da Galeria.`);
+    if (!ok) return;
+
+    slots[slotIndex] = {
+        slot: slot.slot,
+        name: `Mapa ${slot.slot}`,
+        savedAt: null,
+        json: "",
+        preview: "",
+    };
+
+    if (!writeGallerySlots(slots)) {
+        alert("Não foi possível limpar esse espaço da Galeria.");
+        return;
+    }
+
+    renderMemorySlotsPanel();
+
+    if (currentGallerySlot === slotIndex) {
+        currentGallerySlot = null;
+        updateCurrentGallerySlotMenuLabel();
+    }
+}
+
+function renderMemorySlotsPanel() {
+    if (!dom.memorySlotsList) return;
+
+    const slots = readGallerySlots();
+    dom.memorySlotsList.innerHTML = slots.map((slot, index) => {
+        const filled = !!slot.json;
+        const title = escapeHTML(slot.name || `Mapa ${slot.slot}`);
+        const when = filled ? `Salvo em ${escapeHTML(formatGallerySlotDate(slot.savedAt))}` : "Slot vazio";
+        const preview = filled ? (slot.preview || generateGalleryPreviewFromJSON(slot.json)) : `<div class="galleryThumbPlaceholder">Slot vazio</div>`;
+
+        if (filled) {
+            return `
+                <section class="memorySlotCard gallerySlotCard" data-slot-index="${index}">
+                    <button type="button" class="memorySlotPreview is-clickable" data-action="load" data-slot-index="${index}" title="Abrir ${title}">${preview}</button>
+                    <div class="memorySlotBody">
+                        <div class="memorySlotTop">
+                            <div>
+                                <div class="memorySlotTitle galleryName" data-role="name" data-slot-index="${index}" contenteditable="plaintext-only" spellcheck="false">${title}</div>
+                                <div class="memorySlotMeta">Slot ${slot.slot} • ${when}</div>
+                            </div>
+                        </div>
+                        <div class="memorySlotActions">
+                            <button type="button" data-action="save" data-slot-index="${index}">Sobrescrever mapa atual</button>
+                            <button type="button" class="danger" data-action="clear" data-slot-index="${index}">Limpar</button>
+                        </div>
+                    </div>
+                </section>
+            `;
+        }
+
+        return `
+            <section class="memorySlotCard gallerySlotCard is-empty" data-slot-index="${index}">
+                <div class="memorySlotPreview">${preview}</div>
+                <div class="memorySlotBody">
+                    <div class="memorySlotTop">
+                        <div>
+                            <div class="memorySlotTitle">Mapa ${slot.slot}</div>
+                            <div class="memorySlotMeta">Slot ${slot.slot} • ${when}</div>
+                        </div>
+                    </div>
+                    <div class="memorySlotActions">
+                        <button type="button" data-action="save" data-slot-index="${index}">Salvar mapa atual aqui</button>
+                    </div>
+                </div>
+            </section>
+        `;
+    }).join("");
+}
+function getWhatsNewSeenKey() {
+    return `mobinode.whatsnew.seen.${MOBINODE_WHATS_NEW_VERSION}`;
+}
+
+function openWhatsNewPanel() {
+    const panel = document.getElementById("whatsNewPanel");
+    if (!panel) return;
+    panel.style.display = "grid";
+    panel.setAttribute("aria-hidden", "false");
+}
+
+function closeWhatsNewPanel(opts = {}) {
+    const panel = document.getElementById("whatsNewPanel");
+    if (!panel) return;
+    panel.style.display = "none";
+    panel.setAttribute("aria-hidden", "true");
+    if (!opts.skipPersist) {
+        try { localStorage.setItem(getWhatsNewSeenKey(), "1"); } catch (e) {}
+    }
+}
+
+function maybeShowWhatsNewPanel() {
+    try {
+        if (localStorage.getItem(getWhatsNewSeenKey()) === "1") return;
+    } catch (e) {}
+
+    window.setTimeout(() => {
+        openWhatsNewPanel();
+    }, 260);
+}
+
 // =========================
 // UI bindings
 // =========================
@@ -1292,6 +1742,7 @@ if (dom.toolText) dom.toolText.addEventListener("click", () => {
             exportPNG: dom.menuExportPNG,
             exportPDF: dom.menuExportPDF,
             saveCache: dom.menuSaveCache,
+            memory: dom.menuMemorySlots,
             limpar: dom.menuClear,
             config: dom.btnConfig,
             about: dom.btnAbout,
@@ -1312,6 +1763,7 @@ if (dom.toolText) dom.toolText.addEventListener("click", () => {
         // Arquivo
         moveMenuItem(items.novo, fileMenu);
         moveMenuItem(items.saveCache, fileMenu);
+        moveMenuItem(items.memory, fileMenu);
         moveMenuItem(items.limpar, fileMenu);
 
         // Importar
@@ -1412,7 +1864,10 @@ if (dom.toolText) dom.toolText.addEventListener("click", () => {
     });
     document.addEventListener("click", () => closeAllMenus());
     document.addEventListener("keydown", (ev) => {
-        if (ev.key === "Escape") closeAllMenus();
+        if (ev.key === "Escape") {
+            closeAllMenus();
+            closeMemoryPanel();
+        }
     });
 
     // Ctrl+F: redistributeTopMenus
@@ -1484,6 +1939,8 @@ if (dom.toolText) dom.toolText.addEventListener("click", () => {
             });
         }
 
+        updateCurrentGallerySlotMenuLabel();
+
         if (dom.menuNewProject) {
             dom.menuNewProject.addEventListener("click", () => {
                 closeFileMenu();
@@ -1507,6 +1964,8 @@ if (dom.toolText) dom.toolText.addEventListener("click", () => {
                 updateUndoRedoButtons();
 
                 showHelpPanel(false);
+                currentGallerySlot = null;
+                updateCurrentGallerySlotMenuLabel();
 
                 renderAll();
                 refreshSidebar();
@@ -1594,15 +2053,77 @@ if (dom.toolText) dom.toolText.addEventListener("click", () => {
 // Ctrl+F: menuSaveCache
         if (dom.menuSaveCache) {
             dom.menuSaveCache.addEventListener("click", () => {
-            closeFileMenu();
-            const ok = saveMapToBrowserCache();
-            if (ok) {
-            alert("Mapa salvo no cache do navegador.\n\nDica: se o celular recarregar a página, dá pra restaurar (vamos implementar o botão de 'Restaurar do cache' na próxima).");
-            } else {
-             alert("Não foi possível salvar no cache (talvez o armazenamento esteja cheio ou bloqueado).");
-            }
+                closeFileMenu();
+                if (!Number.isInteger(currentGallerySlot) || currentGallerySlot < 0) {
+                    alert("Abra um mapa da Galeria primeiro para definir o slot atual.");
+                    return;
+                }
+                saveCurrentMapToMemorySlot(currentGallerySlot);
             });
          }
+
+        // Ctrl+F: menuMemorySlots
+        if (dom.menuMemorySlots) {
+            dom.menuMemorySlots.addEventListener("click", () => {
+                closeFileMenu();
+                openMemoryPanel();
+            });
+        }
+
+        // Ctrl+F: btnMemoryPanelClose
+        if (dom.btnMemoryPanelClose) {
+            dom.btnMemoryPanelClose.addEventListener("click", closeMemoryPanel);
+        }
+
+        if (dom.memoryPanel) {
+            dom.memoryPanel.addEventListener("click", (ev) => {
+                if (ev.target === dom.memoryPanel) closeMemoryPanel();
+            });
+        }
+
+        const btnWhatsNewClose = document.getElementById("btnWhatsNewClose");
+        const btnWhatsNewOk = document.getElementById("btnWhatsNewOk");
+        const whatsNewPanel = document.getElementById("whatsNewPanel");
+
+        if (btnWhatsNewClose) btnWhatsNewClose.addEventListener("click", () => closeWhatsNewPanel());
+        if (btnWhatsNewOk) btnWhatsNewOk.addEventListener("click", () => closeWhatsNewPanel());
+        if (whatsNewPanel) {
+            whatsNewPanel.addEventListener("click", (ev) => {
+                if (ev.target === whatsNewPanel) closeWhatsNewPanel();
+            });
+        }
+
+        if (dom.memorySlotsList) {
+            dom.memorySlotsList.addEventListener("click", (ev) => {
+                const btn = ev.target.closest("button[data-action]");
+                if (!btn) return;
+
+                const slotIndex = parseInt(btn.dataset.slotIndex, 10);
+                if (!Number.isFinite(slotIndex)) return;
+
+                const action = btn.dataset.action;
+                if (action === "save") saveCurrentMapToMemorySlot(slotIndex);
+                else if (action === "load") loadMemorySlot(slotIndex);
+                else if (action === "clear") clearMemorySlot(slotIndex);
+            });
+
+            dom.memorySlotsList.addEventListener("keydown", (ev) => {
+                const nameEl = ev.target.closest('[data-role="name"]');
+                if (!nameEl) return;
+                if (ev.key === "Enter") {
+                    ev.preventDefault();
+                    nameEl.blur();
+                }
+            });
+
+            dom.memorySlotsList.addEventListener("focusout", (ev) => {
+                const nameEl = ev.target.closest('[data-role="name"]');
+                if (!nameEl) return;
+                const slotIndex = parseInt(nameEl.dataset.slotIndex, 10);
+                if (!Number.isFinite(slotIndex)) return;
+                renameMemorySlot(slotIndex, nameEl.textContent);
+            });
+        }
 
 
         async function exportMapAsPDF_NoPopup({ includeGrid = false, title = "Mobinode" } = {}) {
@@ -3744,8 +4265,9 @@ function boot() {
         }
     } catch (e) {}
 
+    maybeShowWhatsNewPanel();
 
-    console.log("Mobinode: app.js carregou ✅ (v5.2.2)");
+    console.log("Mobinode: app.js carregou ✅ (v5.7.0_RC5)");
 }
 
 // Ctrl+F: AUTO_RESTORE_CACHE

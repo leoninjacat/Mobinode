@@ -382,7 +382,11 @@ function makeStationShapeEl(shape, cx, cy, r, wMul = 1, hMul = 1) {
  menuExportPNG: $("menuExportPNG"),
  menuExportPDF: $("menuExportPDF"),
  menuSaveCache: $("menuSaveCache"),
+ menuMemorySlots: $("menuMemorySlots"),
 
+ memoryPanel: $("memoryPanel"),
+ memorySlotsList: $("memorySlotsList"),
+ btnMemoryPanelClose: $("btnMemoryPanelClose"),
 
  modal: $("modal"),
  modalTitle: $("modalTitle"),
