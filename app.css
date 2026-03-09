@@ -8,6 +8,12 @@ body{
   overflow:hidden;
 }
 
+--panel-bg: rgba(18,22,30,.92);
+
+html[data-theme="light"]{
+  --panel-bg: rgba(255,255,255,.96);
+}
+
 /* =========================
  *   Splash cinematográfico
  *   Ctrl+F: Splash cinematográfico
@@ -1433,6 +1439,54 @@ html[data-theme="light"] .mobidoc .doc-tip{
 /* =========================
    Tema claro (v4.3.0)
    ========================= */
+:root{
+  --panel-bg: rgba(18,22,30,.94);
+  --panel-border: rgba(255,255,255,.10);
+  --panel-shadow: 0 24px 70px rgba(0,0,0,.52);
+  --panel-subtle: rgba(255,255,255,.04);
+  --overlay-bg: rgba(5,8,14,.42);
+  --text-main: #e8ecf1;
+}
+
+html[data-theme="light"]{
+  --panel-bg: rgba(255,255,255,.96);
+  --panel-border: rgba(0,0,0,.10);
+  --panel-shadow: 0 24px 70px rgba(0,0,0,.16);
+  --panel-subtle: rgba(0,0,0,.03);
+  --overlay-bg: rgba(244,247,252,.56);
+  --text-main: #0b0d12;
+}
+
+html[data-theme="light"] .floatingPanelOverlay{
+  background: rgba(244,247,252,.56);
+}
+
+html[data-theme="light"] .floatingPanel{
+  background: rgba(255,255,255,.96);
+  border-color: rgba(0,0,0,.10);
+  box-shadow: 0 24px 70px rgba(0,0,0,.16);
+  color: #0b0d12;
+}
+
+html[data-theme="dark"] .floatingPanel{
+  background: rgba(25,25,25,.96);
+}
+
+html[data-theme="light"] .memorySlotCard{
+  background: rgba(0,0,0,.025);
+  border-color: rgba(0,0,0,.10);
+}
+
+html[data-theme="light"] .memorySlotPreview{
+  background: rgba(0,0,0,.02);
+  border-color: rgba(0,0,0,.08);
+}
+
+html[data-theme="light"] .galleryName:hover,
+html[data-theme="light"] .galleryName:focus{
+  background: rgba(0,0,0,.04);
+  border-color: rgba(0,0,0,.10);
+}
 
 html[data-theme="light"] body{
   background: #f6f7fb;
