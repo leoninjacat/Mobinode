@@ -311,6 +311,7 @@ let connectionDraft = []; // guarda a ordem dos cliques (até 3)
     // Text pointerdown
     // =========================
     function onTextDown(ev, textId) {
+        try { if (typeof ensureInterfaceVisible === "function") ensureInterfaceVisible(); } catch (e) {}
         // Evita que o clique “vaze” pro viewport (no modo 📐) e crie sinalização por baixo.
         try { ev.stopPropagation(); } catch {}
         try { ev.preventDefault(); } catch {}
@@ -324,6 +325,7 @@ let connectionDraft = []; // guarda a ordem dos cliques (até 3)
     // Node pointerdown
     // =========================
     function onNodeDown(ev, nodeId) {
+        try { if (typeof ensureInterfaceVisible === "function") ensureInterfaceVisible(); } catch (e) {}
         if (state.tool === "neutral") {
             if (ev.shiftKey) toggleSelectionNode(nodeId);
             else if (!state.selectedNodeIds.has(nodeId) || state.selectedNodeIds.size !== 1) setSingleSelectionNode(nodeId);

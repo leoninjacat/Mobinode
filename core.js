@@ -217,6 +217,8 @@ function makeStationShapeEl(shape, cx, cy, r, wMul = 1, hMul = 1) {
 
 
  themeMode: "system",
+ interfaceHidden: false,
+ interfaceHiddenPrevTool: null,
 
  // UI
  propsMode: "metapanel", // metapanel (v4.6.0)
@@ -358,7 +360,8 @@ function makeStationShapeEl(shape, cx, cy, r, wMul = 1, hMul = 1) {
  toolShapes: $("toolShapes"),
  toolRotate: $("toolRotate"),
 
-
+ btnHideInterface: $("btnHideInterface"),
+ hideInterfaceCorner: $("hideInterfaceCorner"),
 
  btnUndo: $("btnUndo"),
  btnRedo: $("btnRedo"),
@@ -443,6 +446,7 @@ function makeStationShapeEl(shape, cx, cy, r, wMul = 1, hMul = 1) {
 
  // panels
  stationPanel: $("stationPanel"),
+ sidebarStationFooter: $("sidebarStationFooter"),
  multiPanel: $("multiPanel"),
 
  // curvas (painel)
@@ -452,8 +456,12 @@ function makeStationShapeEl(shape, cx, cy, r, wMul = 1, hMul = 1) {
  linePanel: $("linePanel"),
 
  // station fields
+ useStationLabel: $("useStationLabel"),
+ useStationName: $("useStationName"),
  useStationPrefix: $("useStationPrefix"),
  useStationSuffix: $("useStationSuffix"),
+ stationLabelGroup: $("stationLabelGroup"),
+ stationNameField: $("stationNameField"),
  stationPrefixField: $("stationPrefixField"),
  stationSuffixField: $("stationSuffixField"),
 
@@ -483,6 +491,7 @@ function makeStationShapeEl(shape, cx, cy, r, wMul = 1, hMul = 1) {
 	 stationStyleStrokeWidthRange: $("stationStyleStrokeWidthRange"),
 	 stationStyleStrokeWidth: $("stationStyleStrokeWidth"),
 	 applyStationStyleActiveLine: $("applyStationStyleActiveLine"),
+	 applyStationStyleAllStations: $("applyStationStyleAllStations"),
 	 applyStationStyleSelection: $("applyStationStyleSelection"),
 
  // multi fields
@@ -2778,6 +2787,7 @@ function renderLineEndpointBadges() {
 
 
             hit.addEventListener("pointerdown", (ev) => {
+                try { if (typeof ensureInterfaceVisible === "function") ensureInterfaceVisible(); } catch (e2) {}
                 // ╮ Curvas: arrastar o ponto da dobra do traçado
                 if (state.tool === "curves") {
                     ev.preventDefault();
@@ -2823,10 +2833,14 @@ function renderLineEndpointBadges() {
     }
 
     function renderStationLabel(n, gxOverride) {
-        const main = (n.name ?? "").toString().trim();
+        if (n.labelEnabled === false) return null;
 
-        const prefixLines = n.prefixEnabled ? splitLabelLines(n.prefix) : [];
-        const suffixLines = n.suffixEnabled ? splitLabelLines(n.suffix) : [];
+        const main = (n.nameEnabled === false)
+            ? ""
+            : (n.name ?? "").toString().trim();
+
+        const prefixLines = (n.labelEnabled !== false && n.prefixEnabled) ? splitLabelLines(n.prefix) : [];
+        const suffixLines = (n.labelEnabled !== false && n.suffixEnabled) ? splitLabelLines(n.suffix) : [];
 
         if (!main && prefixLines.length === 0 && suffixLines.length === 0) return null;
 
@@ -3240,6 +3254,9 @@ function endGroupedEdit(key) {
 
  prefix: "",
  suffix: "",
+
+ labelEnabled: true,
+ nameEnabled: true,
 
  // ✅ por padrão, oculto/desligado
  prefixEnabled: false,

@@ -76,7 +76,86 @@ function showToast(message, opts = {}) {
         }
     }
 
+    function syncHideInterfaceButtonUI() {
+        const btn = dom.btnHideInterface;
+        if (!btn) return;
+        const hidden = !!state.interfaceHidden;
+        btn.textContent = "UI";
+        btn.classList.toggle("interface-toggle-float", hidden || !isMobileLayout());
+        btn.classList.toggle("active", hidden);
+        btn.setAttribute("aria-pressed", hidden ? "true" : "false");
+        btn.setAttribute("title", hidden ? "Mostrar interface" : "Ocultar interface");
+        btn.setAttribute("aria-label", hidden ? "Mostrar interface" : "Ocultar interface");
+    }
+
+    function placeHideInterfaceButtonByLayout() {
+        const btn = dom.btnHideInterface;
+        if (!btn) return;
+
+        const mobile = isMobileLayout();
+        const topbar = document.getElementById("topbarRight");
+        const corner = dom.hideInterfaceCorner || document.getElementById("hideInterfaceCorner");
+
+        // No desktop ele continua flutuando no canto inferior direito.
+        // No mobile, ao ocultar a interface, ele vai para um canto fixo superior direito
+        // para não quebrar o workflow da barra principal.
+        const shouldFloat = !mobile || !!state.interfaceHidden;
+
+        if (shouldFloat) {
+            if (corner && btn.parentNode !== corner) corner.appendChild(btn);
+        } else {
+            if (topbar && btn.parentNode !== topbar) topbar.appendChild(btn);
+        }
+
+        syncHideInterfaceButtonUI();
+    }
+
+    function setInterfaceHidden(on) {
+        const hidden = !!on;
+        const wasHidden = !!state.interfaceHidden;
+
+        if (hidden && !wasHidden) {
+            state.interfaceHiddenPrevTool = state.tool || "network";
+            try {
+                if (typeof setTool === "function") setTool("pan");
+                else state.tool = "pan";
+            } catch (e) {
+                state.tool = "pan";
+            }
+        }
+
+        state.interfaceHidden = hidden;
+        document.body.classList.toggle("interface-hidden", hidden);
+
+        if (!hidden) {
+            const restoreTool = state.interfaceHiddenPrevTool;
+            if (restoreTool) {
+                try {
+                    if (typeof setTool === "function") setTool(restoreTool);
+                    else state.tool = restoreTool;
+                } catch (e) {
+                    state.tool = restoreTool;
+                }
+            }
+            try { showSidebar(true); } catch (e) {}
+        }
+
+        placeHideInterfaceButtonByLayout();
+    }
+
+    function ensureInterfaceVisible(opts = {}) {
+        if (!state.interfaceHidden) return false;
+        setInterfaceHidden(false);
+        if (opts.showSidebar !== false) {
+            try { showSidebar(true); } catch (e) {}
+        }
+        return true;
+    }
+
     window.placeHelpButtonByLayout = placeHelpButtonByLayout;
+    window.placeHideInterfaceButtonByLayout = placeHideInterfaceButtonByLayout;
+    window.setInterfaceHidden = setInterfaceHidden;
+    window.ensureInterfaceVisible = ensureInterfaceVisible;
 
 
 
@@ -262,8 +341,19 @@ function showToast(message, opts = {}) {
 
     function showSidebar(on) {
         sidebarOpen = !!on;
-        if (dom.sidebar) dom.sidebar.style.display = sidebarOpen ? "block" : "none";
+        if (dom.sidebar) dom.sidebar.style.display = sidebarOpen ? "flex" : "none";
         if (dom.btnShowSidebar) dom.btnShowSidebar.style.display = sidebarOpen ? "none" : "block";
+        syncSidebarStationFooter();
+    }
+
+    
+
+    function syncSidebarStationFooter() {
+        if (!dom.sidebarStationFooter) return;
+        const hasSingleStation = state.selectedNodeIds && state.selectedNodeIds.size === 1 && !state.selectedEdgeId && !state.selectedTextId;
+        const visible = !!sidebarOpen && !!hasSingleStation;
+        dom.sidebarStationFooter.style.display = visible ? "block" : "none";
+        dom.sidebarStationFooter.setAttribute("aria-hidden", visible ? "false" : "true");
     }
 
     function refreshLinePanel() {
@@ -400,20 +490,28 @@ function showToast(message, opts = {}) {
 			n.stationStyle = { shape: "circle", size: CFG.STATION_R * 2, wMul: 1, hMul: 1, fill: "#ffffff", stroke: "", strokeWidth: 3 };
 		}
 
-        dom.stationPanel.style.display = "block";
+        dom.stationPanel.style.display = "flex";
 
         if (dom.sidebarTitle) dom.sidebarTitle.textContent = "Propriedades";
         if (dom.sidebarMeta) dom.sidebarMeta.textContent = `ID: ${n.id}`;
+        syncSidebarStationFooter();
         if (dom.stationPos) dom.stationPos.textContent = `x: ${n.x} • y: ${n.y}`;
 
         sidebarIsUpdating = true;
 
         // ✅ checkboxes controlam visibilidade dos inputs
+        if (typeof n.labelEnabled !== "boolean") n.labelEnabled = true;
+        if (typeof n.nameEnabled !== "boolean") n.nameEnabled = !!(n.name && n.name.trim());
+
+        if (dom.useStationLabel) dom.useStationLabel.checked = !!n.labelEnabled;
+        if (dom.useStationName) dom.useStationName.checked = !!n.nameEnabled;
         if (dom.useStationPrefix) dom.useStationPrefix.checked = !!n.prefixEnabled;
         if (dom.useStationSuffix) dom.useStationSuffix.checked = !!n.suffixEnabled;
 
-        setFieldVisible(dom.stationPrefixField, !!n.prefixEnabled);
-        setFieldVisible(dom.stationSuffixField, !!n.suffixEnabled);
+        setFieldVisible(dom.stationLabelGroup, !!n.labelEnabled);
+        setFieldVisible(dom.stationNameField, !!n.nameEnabled && !!n.labelEnabled);
+        setFieldVisible(dom.stationPrefixField, !!n.prefixEnabled && !!n.labelEnabled);
+        setFieldVisible(dom.stationSuffixField, !!n.suffixEnabled && !!n.labelEnabled);
 
         if (dom.stationPrefix) dom.stationPrefix.value = n.prefix || "";
         if (dom.stationName) dom.stationName.value = n.name || "";
@@ -855,7 +953,7 @@ if (state.propsMode === "metapanel") {
         }
     }
 
-        if (dom.stationPanel) dom.stationPanel.style.display = "block";
+        if (dom.stationPanel) dom.stationPanel.style.display = "flex";
         if (dom.multiPanel) dom.multiPanel.style.display = "block";
         if (dom.textPanel) dom.textPanel.style.display = "block";
 
@@ -863,6 +961,7 @@ if (state.propsMode === "metapanel") {
         setSectionState(dom.accMulti, dom.multiEmpty, dom.multiPanel, selCount > 1 && !lock && !hasEdge && !hasText);
         // ✅ Sinalização deve ficar usável quando a ferramenta 📐 estiver ativa
         setSectionState(dom.accText, dom.textEmpty, dom.textPanel, !lock && (state.tool === "text" || (hasText && !hasShape)));
+        syncSidebarStationFooter();
 
         // =========================
         // Rotação (universal)
@@ -1013,6 +1112,10 @@ if (dom.textOutline) {
             if (dom.applyStationStyleActiveLine) {
                 const hasActive = !!state.activeLineId && !!findLine(state.activeLineId);
                 dom.applyStationStyleActiveLine.disabled = !hasActive;
+            }
+            if (dom.applyStationStyleAllStations) {
+                const realCount = (state.lines || []).filter(x => !(x && (x.role === "connector" || x.name === "__connector__"))).length;
+                dom.applyStationStyleAllStations.disabled = realCount < 1;
             }
             // v4.6.1: botões adicionais
             if (dom.applyStationOrientationActiveLine) {
