@@ -4,7 +4,7 @@
  */
 
 "use strict";
-console.log("%c[IO_BOOT] CARREGADO: v5.7.0_RC3", "color:#0f0;font-weight:bold");
+console.log("%c[IO_BOOT] CARREGADO: v4.8.3", "color:#0f0;font-weight:bold");
 
 
 // =========================
@@ -749,6 +749,8 @@ function importJSON(txt) {
         }
 
 
+        if (typeof n.labelEnabled !== "boolean") n.labelEnabled = true;
+        if (typeof n.nameEnabled !== "boolean") n.nameEnabled = !!(n.name && n.name.trim());
         if (typeof n.prefixEnabled !== "boolean") n.prefixEnabled = !!(n.prefix && n.prefix.trim());
         if (typeof n.suffixEnabled !== "boolean") n.suffixEnabled = !!(n.suffix && n.suffix.trim());
     });
@@ -843,7 +845,7 @@ function clearAll(push = true) {
 // Ctrl+F: MOBINODE_GALLERY_SLOTS_KEY
 // =========================
 const MOBINODE_GALLERY_SLOTS_KEY = "mobinode.gallery.v1";
-const MOBINODE_WHATS_NEW_VERSION = "v5.7.0_RC5"; // Ctrl+F: MOBINODE_WHATS_NEW_VERSION
+const MOBINODE_WHATS_NEW_VERSION = "v4.8.3"; // Ctrl+F: MOBINODE_WHATS_NEW_VERSION
 const MOBINODE_MEMORY_SLOTS_KEY = "mobinode.memorySlots.v1"; // legado
 const MOBINODE_GALLERY_SLOTS_MAX = 5;
 let currentGallerySlot = null; // Ctrl+F: currentGallerySlot
@@ -1036,6 +1038,16 @@ function saveCurrentMapToMemorySlot(slotIndex) {
     const slot = slots[slotIndex];
     if (!slot) return;
 
+    const isOverwrite = !!slot.json;
+
+    if (isOverwrite) {
+        const ok = confirm(
+            `Sobrescrever ${slot.name}?\n\n` +
+            `O mapa salvo nesse slot será substituído pelo mapa atual.`
+        );
+        if (!ok) return;
+    }
+
     slot.json = exportJSON();
     slot.savedAt = Date.now();
     if (!slot.name || /^Mapa\s+\d+$/i.test(slot.name)) {
@@ -1052,7 +1064,12 @@ function saveCurrentMapToMemorySlot(slotIndex) {
     currentGallerySlot = slotIndex;
     updateCurrentGallerySlotMenuLabel();
     renderMemorySlotsPanel();
-    if (typeof showToast === "function") showToast(`Mapa salvo em ${slot.name}`);
+
+    if (typeof showToast === "function") {
+        showToast(isOverwrite
+        ? `Mapa sobrescrito em ${slot.name}`
+        : `Mapa salvo em ${slot.name}`);
+    }
 }
 
 function loadMemorySlot(slotIndex) {
@@ -2878,8 +2895,53 @@ if (dom.toolText) dom.toolText.addEventListener("click", () => {
         // help
         if (dom.btnHelp) dom.btnHelp.addEventListener("click", () => toggleHelpPanel());
         if (dom.btnHelpClose) dom.btnHelpClose.addEventListener("click", () => showHelpPanel(false));
+        if (dom.btnHideInterface) {
+            dom.btnHideInterface.addEventListener("click", () => {
+                const next = !state.interfaceHidden;
+                if (next) {
+                    try { showHelpPanel(false); } catch (e) {}
+                    try { closeAllMenus(); } catch (e) {}
+                }
+                try { setInterfaceHidden(next); } catch (e) {}
+            });
+        }
 
         // ✅ checkboxes: mostram/ocultam campos e ativam/desativam renderização
+        if (dom.useStationLabel) {
+            dom.useStationLabel.addEventListener("change", () => {
+                if (sidebarIsUpdating) return;
+                if (state.selectedNodeIds.size !== 1) return;
+                const id = [...state.selectedNodeIds][0];
+                const n = findNode(id);
+                if (!n) return;
+
+                pushHistory();
+                n.labelEnabled = !!dom.useStationLabel.checked;
+                setFieldVisible(dom.stationLabelGroup, n.labelEnabled);
+                setFieldVisible(dom.stationNameField, n.labelEnabled && !!n.nameEnabled);
+                setFieldVisible(dom.stationPrefixField, n.labelEnabled && !!n.prefixEnabled);
+                setFieldVisible(dom.stationSuffixField, n.labelEnabled && !!n.suffixEnabled);
+                renderAll();
+                refreshSidebar();
+            });
+        }
+
+        if (dom.useStationName) {
+            dom.useStationName.addEventListener("change", () => {
+                if (sidebarIsUpdating) return;
+                if (state.selectedNodeIds.size !== 1) return;
+                const id = [...state.selectedNodeIds][0];
+                const n = findNode(id);
+                if (!n) return;
+
+                pushHistory();
+                n.nameEnabled = !!dom.useStationName.checked;
+                setFieldVisible(dom.stationNameField, !!n.nameEnabled && !!n.labelEnabled);
+                renderAll();
+                refreshSidebar();
+            });
+        }
+
         if (dom.useStationPrefix) {
             dom.useStationPrefix.addEventListener("change", () => {
                 if (sidebarIsUpdating) return;
@@ -2890,7 +2952,7 @@ if (dom.toolText) dom.toolText.addEventListener("click", () => {
 
                 pushHistory();
                 n.prefixEnabled = !!dom.useStationPrefix.checked;
-                setFieldVisible(dom.stationPrefixField, n.prefixEnabled);
+                setFieldVisible(dom.stationPrefixField, n.prefixEnabled && n.labelEnabled !== false);
                 renderAll();
                 refreshSidebar();
             });
@@ -2906,7 +2968,7 @@ if (dom.toolText) dom.toolText.addEventListener("click", () => {
 
                 pushHistory();
                 n.suffixEnabled = !!dom.useStationSuffix.checked;
-                setFieldVisible(dom.stationSuffixField, n.suffixEnabled);
+                setFieldVisible(dom.stationSuffixField, n.suffixEnabled && n.labelEnabled !== false);
                 renderAll();
                 refreshSidebar();
             });
@@ -3466,6 +3528,45 @@ if (dom.toolText) dom.toolText.addEventListener("click", () => {
             });
         }
 
+        if (dom.applyStationStyleAllStations) {
+            dom.applyStationStyleAllStations.addEventListener("click", () => {
+                const realLines = (state.lines || []).filter(x => !(x && (x.role === "connector" || x.name === "__connector__")));
+                if (!realLines.length) {
+                    window.alert("Não há linhas para receber esse estilo.");
+                    return;
+                }
+
+                const stationIds = new Set();
+                for (const line of realLines) {
+                    const ids = (typeof getStationIdsForLine === "function") ? getStationIdsForLine(line.id) : new Set();
+                    for (const id of ids) stationIds.add(id);
+                }
+
+                if (!stationIds.size) {
+                    window.alert("Não há estações conectadas às linhas do mapa.");
+                    return;
+                }
+
+                const ok = window.confirm(`Aplicar este estilo em ${stationIds.size} estação(ões) distribuída(s) por ${realLines.length} linha(s)? (Ctrl+Z desfaz)`);
+                if (!ok) return;
+
+                const style = readStationStyleFromInputs();
+                pushHistory();
+
+                for (const line of realLines) {
+                    line.stationStyleDefault = { ...style };
+                }
+                for (const id of stationIds) {
+                    const n = findNode(id);
+                    if (!n) continue;
+                    applyStationStyleToNode(n, style);
+                }
+
+                rebuildInterchangePortCache();
+                renderAll();
+                refreshSidebar();
+            });
+        }
 
 
         if (dom.multiOrientation) {
@@ -4199,7 +4300,11 @@ function boot() {
 
     bindUI();
     placeHelpButtonByLayout();
+    try { if (typeof placeHideInterfaceButtonByLayout === "function") placeHideInterfaceButtonByLayout(); } catch (e) {}
     window.addEventListener("resize", placeHelpButtonByLayout);
+    window.addEventListener("resize", () => {
+        try { if (typeof placeHideInterfaceButtonByLayout === "function") placeHideInterfaceButtonByLayout(); } catch (e) {}
+    });
 
 
     // v4.6.2: fallback — se algum pointer-capture ficar preso no viewport,
@@ -4260,6 +4365,7 @@ function boot() {
                 if (t) clearTimeout(t);
                 t = setTimeout(() => {
                     try { if (typeof placeHelpButtonByLayout === "function") placeHelpButtonByLayout(); } catch (e) {}
+                    try { if (typeof placeHideInterfaceButtonByLayout === "function") placeHideInterfaceButtonByLayout(); } catch (e) {}
                 }, 120);
             });
         }
@@ -4284,15 +4390,17 @@ function placeHelpButtonByLayout(){
     const btn = dom.btnHelp;
     if (!btn) return;
 
-    const topbarRight = document.getElementById("topbar-right");
+    const topbarRight = document.getElementById("topbarRight");
     const helpCorner = document.getElementById("helpCorner");
 
-    const isMobile = window.matchMedia("(max-width: 900px)").matches;
+    const isMobile = window.matchMedia("(max-width: 820px)").matches;
 
     if (isMobile) {
         if (topbarRight && btn.parentElement !== topbarRight) topbarRight.appendChild(btn);
+        btn.classList.remove("help-float");
     } else {
         if (helpCorner && btn.parentElement !== helpCorner) helpCorner.appendChild(btn);
+        btn.classList.add("help-float");
     }
 }
 
