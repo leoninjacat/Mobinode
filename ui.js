@@ -80,7 +80,6 @@ function showToast(message, opts = {}) {
         const btn = dom.btnHideInterface;
         if (!btn) return;
         const hidden = !!state.interfaceHidden;
-        btn.textContent = "UI";
         btn.classList.toggle("interface-toggle-float", hidden || !isMobileLayout());
         btn.classList.toggle("active", hidden);
         btn.setAttribute("aria-pressed", hidden ? "true" : "false");

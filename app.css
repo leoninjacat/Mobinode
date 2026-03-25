@@ -179,6 +179,14 @@ max-width: calc(100vw - 24px);
   line-height: 1;
 }
 
+#btnHideInterface .icon{
+width: 20px;
+height: 20px;
+display: block;
+flex: 0 0 20px;
+pointer-events: none;
+}
+
 #ui #topbarRight #btnHelp{
   font-size: 18px;
 }

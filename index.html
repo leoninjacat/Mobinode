@@ -78,7 +78,9 @@
 
     <div id="topbarRight" class="topbar-right" role="group" aria-label="Ajuda e interface">
       <button id="btnHelp" title="Ajuda">?</button>
-      <button id="btnHideInterface" title="Ocultar interface" aria-label="Ocultar interface">UI</button>
+      <button id="btnHideInterface" title="Ocultar interface" aria-label="Ocultar interface">
+      <svg class="icon"><use href="#icon-hideinterface"></use></svg>
+      </button>
     </div>
   </div>
 
@@ -1066,7 +1068,7 @@
         <main class="about-details">
           <section class="about-pane active" data-about-pane="app">
             <h2>Mobinode</h2>
-            <h4>versão 5.9.9</h4>
+            <h4>versão 5.9.0</h4>
             <p>
               Mobinode é um editor visual para criar mapas esquemáticos de transporte (linhas, estações,
               integrações e textos) direto no navegador — rápido, leve e focado em clareza.
@@ -1575,6 +1577,20 @@ if ("serviceWorker" in navigator) {
         <path
           d="M 4.593569,2.3609381 3.2224602,4.7350443 H 6.011811 Z"
           fill="currentColor"
+        />
+      </svg>
+  </symbol>
+
+  <symbol id="icon-hideinterface" viewBox="0 0 6.35 6.35">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M9 9 L4 4 M4 4 H8 M4 4 V8
+            M15 15 L20 20 M20 20 H16 M20 20 V16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
         />
       </svg>
   </symbol>
